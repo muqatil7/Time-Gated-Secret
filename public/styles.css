@@ -1,0 +1,95 @@
+:root {
+  color-scheme: dark;
+  --bg: #0a0f1a;
+  --card: #0f1722;
+  --muted: #9aa4b2;
+  --fg: #e5e7eb;
+  --border: #1f2937;
+  --primary: #6366f1;
+  --success: #22c55e;
+  --warning: #f59e0b;
+  --danger: #ef4444;
+}
+
+html, body {
+  background-color: var(--bg);
+  color: var(--fg);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* Accessible focus outlines */
+*:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+/* Form elements in dark theme */
+input, textarea, select {
+  background-color: var(--card);
+  color: var(--fg);
+  border-color: var(--border);
+}
+
+input::placeholder, textarea::placeholder {
+  color: #8993a5;
+}
+
+/* Links */
+a { color: #93c5fd; }
+a:hover { color: #bfdbfe; }
+
+/* Cards and subtle separators */
+.card {
+  background-color: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+}
+
+/* Utility for multi-line truncation */
+.truncate-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Compact time input layout to avoid edge collisions */
+.time-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.5rem;
+}
+@media (min-width: 768px) {
+  .time-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (min-width: 1280px) {
+  .time-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+.time-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.time-input {
+  max-width: 10.5rem;
+}
+.time-sep { color: #9aa4b2; }
+
+/* Reduce motion for users who prefer it */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Scrollbar (WebKit) */
+*::-webkit-scrollbar { height: 12px; width: 12px; }
+*::-webkit-scrollbar-track { background: transparent; }
+*::-webkit-scrollbar-thumb { background-color: #2b3544; border-radius: 8px; border: 2px solid transparent; background-clip: padding-box; }
+
+
