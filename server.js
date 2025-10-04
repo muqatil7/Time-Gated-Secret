@@ -3,7 +3,6 @@ const express = require('express');
 const helmet = require('helmet');
 const path = require('path');
 const { DateTime } = require('luxon');
-const crypto = require('crypto');
 const db = require('./src/db');
 const {
   parseScheduleFromBody,
@@ -48,14 +47,14 @@ app.get('/robots.txt', (req, res) => {
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
-function generateId(size = 21) {
-  const alphabet = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ_abcdefghijklmnopqrstuvwxyz-';
-  const bytes = crypto.randomBytes(size);
-  let id = '';
-  for (let i = 0; i < size; i += 1) {
-    id += alphabet[bytes[i] & 63];
-  }
-  return id;
+// Custom ID validation
+const RESERVED_IDS = new Set(['new', 'list', 'healthz', 'robots.txt']);
+function isValidCustomId(id) {
+  if (typeof id !== 'string') return false;
+  const trimmed = id.trim();
+  if (!/^[a-z0-9][a-z0-9-]{2,62}$/.test(trimmed)) return false; // 3-63 chars
+  if (RESERVED_IDS.has(trimmed)) return false;
+  return true;
 }
 
 // Initialize database and start server only after successful init
@@ -100,13 +99,18 @@ app.get('/new', (req, res) => {
     defaultTimezone: clientTz,
     defaultSchedule,
     errors: [],
-    values: { secretText: '' },
+    values: { id: '', secretText: '' },
   });
 });
 
 app.post('/secret', async (req, res) => {
-  const { secretText = '', timezone = '' } = req.body;
+  const { id: rawId = '', secretText = '', timezone = '' } = req.body;
   const errors = [];
+
+  const id = String(rawId || '').trim().toLowerCase();
+  if (!isValidCustomId(id)) {
+    errors.push('Custom ID must be 3–63 chars (lowercase letters, numbers, hyphens) and not reserved.');
+  }
 
   if (!secretText || typeof secretText !== 'string' || secretText.trim().length === 0) {
     errors.push('Secret text is required.');
@@ -123,17 +127,24 @@ app.post('/secret', async (req, res) => {
     errors.push(e.message || 'Invalid schedule.');
   }
 
+  // Check uniqueness if format is valid
+  if (errors.length === 0) {
+    const existing = await db.getSecret(id);
+    if (existing) {
+      errors.push('This ID is already taken. Please choose another.');
+    }
+  }
+
   if (errors.length > 0) {
     return res.status(400).render('new', {
       title: 'Create Secret',
       defaultTimezone: timezone || 'UTC',
       defaultSchedule: schedule || buildDefaultExampleSchedule(),
       errors,
-      values: { secretText },
+      values: { id, secretText },
     });
   }
 
-  const id = generateId(21);
   const createdAt = DateTime.utc().toISO();
   const initialVisibility = isSecretVisibleNow(schedule, timezone);
   const lockedAt = initialVisibility ? null : DateTime.utc().toISO();
@@ -141,6 +152,16 @@ app.post('/secret', async (req, res) => {
   try {
     await db.createSecret({ id, secretText, timezone, schedule, createdAt, lockedAt });
   } catch (e) {
+    // Handle rare race: unique violation
+    if (e && e.code === '23505') {
+      return res.status(400).render('new', {
+        title: 'Create Secret',
+        defaultTimezone: timezone || 'UTC',
+        defaultSchedule: schedule || buildDefaultExampleSchedule(),
+        errors: ['This ID is already taken. Please choose another.'],
+        values: { id, secretText },
+      });
+    }
     console.error('Failed to create secret', e);
     return res.status(500).send('Internal Server Error');
   }

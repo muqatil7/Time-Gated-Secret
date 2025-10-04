@@ -17,6 +17,7 @@ Key behavior
 - Time zone must be a valid IANA zone (e.g., Africa/Cairo, Europe/London)
 - No cookies/localStorage; server-side PostgreSQL only
 - Responses are sent with Cache-Control: no-store to avoid caching
+ - IDs are chosen by the user at creation time (no random IDs). They must be unique and match: 3–63 characters, lowercase letters, numbers, hyphens (e.g., `secret-1`). Reserved IDs: `new`, `list`, `healthz`, `robots.txt`.
 
 Tech
 - Node.js + Express + EJS
@@ -34,7 +35,7 @@ npm run dev
 
 Routes
 - `/` → redirects to `/new`
-- `/new` → create a secret and define schedule (default tz field may auto-fill to Africa/Cairo)
+- `/new` → create a secret with your custom ID and define schedule (default tz field may auto-fill to Africa/Cairo)
 - `/list` → list all secrets with visibility status and previews when visible
 - `/s/:id` → show a specific secret; manage schedule only while visible and before any hidden period
 - `/s/:id/update-schedule` → POST endpoint to update timezone/schedule (visible and not locked only)
@@ -42,9 +43,9 @@ Routes
 - `/robots.txt` → disallow crawling
 
 Usage
-1. Open `/new`, enter the secret, choose the IANA time zone
+1. Open `/new`, choose a unique ID (e.g., `secret-1`), enter the secret, choose the IANA time zone
 2. Configure weekly visibility windows
-3. Submit to get a unique secret URL `/s/:id`
+3. Submit to get your secret URL `/s/:id` (example: `/s/secret-1`)
 4. While visible and before any hidden period happens, you may adjust the schedule/time zone at `/s/:id`
 5. After a hidden period is detected (or currently hidden), updates are blocked permanently
 

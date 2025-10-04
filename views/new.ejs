@@ -30,6 +30,11 @@
 
     <form method="POST" action="/secret" class="space-y-6" aria-describedby="form-help">
       <div>
+        <label class="block text-sm font-medium mb-1" for="id">Custom ID</label>
+        <input id="id" type="text" name="id" value="<%= (values && values.id) || '' %>" required pattern="^[a-z0-9][a-z0-9-]{2,62}$" minlength="3" maxlength="63" class="w-full rounded-md border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="e.g., secret-1" aria-describedby="id-help" />
+        <p id="id-help" class="text-xs text-slate-400 mt-1">3–63 chars, lowercase letters, numbers, hyphens. Example: secret-1</p>
+      </div>
+      <div>
         <label class="block text-sm font-medium mb-1" for="secretText">Secret text</label>
         <textarea id="secretText" name="secretText" rows="4" required class="w-full rounded-md border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Enter your secret..."><%= (values && values.secretText) || '' %></textarea>
       </div>
