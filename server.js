@@ -2,6 +2,7 @@ const express = require('express');
 const helmet = require('helmet');
 const path = require('path');
 const { DateTime } = require('luxon');
+const crypto = require('crypto');
 const db = require('./src/db');
 const {
   parseScheduleFromBody,
@@ -45,6 +46,16 @@ app.get('/robots.txt', (req, res) => {
 
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
+
+function generateId(size = 21) {
+  const alphabet = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ_abcdefghijklmnopqrstuvwxyz-';
+  const bytes = crypto.randomBytes(size);
+  let id = '';
+  for (let i = 0; i < size; i += 1) {
+    id += alphabet[bytes[i] & 63];
+  }
+  return id;
+}
 
 // Initialize database
 db.init().catch((err) => {
@@ -115,8 +126,7 @@ app.post('/secret', async (req, res) => {
     });
   }
 
-  const { nanoid } = await import('nanoid');
-  const id = nanoid(21);
+  const id = generateId(21);
   const createdAt = DateTime.utc().toISO();
   const initialVisibility = isSecretVisibleNow(schedule, timezone);
   const lockedAt = initialVisibility ? null : DateTime.utc().toISO();
