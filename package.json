@@ -1,7 +1,6 @@
 {
   "name": "secret-save-site",
   "version": "1.0.0",
-  "type": "module"
   "description": "Time-gated plaintext secret app",
   "main": "server.js",
   "scripts": {
@@ -22,4 +21,5 @@
     "nodemon": "^3.1.7"
   }
 }
+
 
