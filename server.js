@@ -2,7 +2,6 @@ const express = require('express');
 const helmet = require('helmet');
 const path = require('path');
 const { DateTime } = require('luxon');
-const { nanoid } = require('nanoid');
 const db = require('./src/db');
 const {
   parseScheduleFromBody,
@@ -116,6 +115,7 @@ app.post('/secret', async (req, res) => {
     });
   }
 
+  const { nanoid } = await import('nanoid');
   const id = nanoid(21);
   const createdAt = DateTime.utc().toISO();
   const initialVisibility = isSecretVisibleNow(schedule, timezone);

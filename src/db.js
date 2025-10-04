@@ -1,8 +1,21 @@
 const path = require('path');
 const fs = require('fs');
+const os = require('os');
 const sqlite3 = require('sqlite3').verbose();
 
-const dataDir = path.join(__dirname, '..', 'data');
+// Use writable tmp dir on serverless (e.g., Vercel), fallback to repo /data locally
+const isWritableTmp = (() => {
+  try {
+    const testDir = path.join('/tmp');
+    fs.accessSync(testDir, fs.constants.W_OK);
+    return true;
+  } catch (_e) {
+    return false;
+  }
+})();
+
+const preferredDataRoot = isWritableTmp ? path.join('/tmp', 'secret-save-site') : path.join(__dirname, '..', 'data');
+const dataDir = preferredDataRoot;
 const dbFile = path.join(dataDir, 'secrets.sqlite');
 
 let db;
