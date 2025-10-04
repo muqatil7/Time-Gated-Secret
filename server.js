@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require('express');
 const helmet = require('helmet');
 const path = require('path');
@@ -57,11 +58,17 @@ function generateId(size = 21) {
   return id;
 }
 
-// Initialize database
-db.init().catch((err) => {
-  console.error('Failed to initialize database', err);
-  process.exit(1);
-});
+// Initialize database and start server only after successful init
+db.init()
+  .then(() => {
+    app.listen(PORT, () => {
+      console.log(`Secret app listening on http://localhost:${PORT}`);
+    });
+  })
+  .catch((err) => {
+    console.error('Failed to initialize database', err);
+    process.exit(1);
+  });
 
 app.get('/healthz', (req, res) => res.type('text').send('ok'));
 
@@ -222,8 +229,6 @@ app.use((req, res) => {
   res.status(404).render('not_found', { title: 'Not Found' });
 });
 
-app.listen(PORT, () => {
-  console.log(`Secret app listening on http://localhost:${PORT}`);
-});
+// server starts in db.init().then(...)
 
 

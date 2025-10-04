@@ -1,114 +1,142 @@
-const path = require('path');
-const fs = require('fs');
-const os = require('os');
-const sqlite3 = require('sqlite3').verbose();
+const { Pool } = require('pg');
 
-// Use writable tmp dir on serverless (e.g., Vercel), fallback to repo /data locally
-const isWritableTmp = (() => {
-  try {
-    const testDir = path.join('/tmp');
-    fs.accessSync(testDir, fs.constants.W_OK);
-    return true;
-  } catch (_e) {
+// Build a robust Pool configuration that works locally and on Render
+function createPool() {
+  const hasUrl = !!process.env.DATABASE_URL;
+  const shouldUseSSL = (() => {
+    const sslEnv = String(process.env.DATABASE_SSL || process.env.PGSSLMODE || '').toLowerCase();
+    if (sslEnv === 'require' || sslEnv === 'true') return true;
+    if (process.env.NODE_ENV === 'production' && /render\.com/.test(process.env.DATABASE_URL || '')) return true;
     return false;
+  })();
+
+  const ssl = shouldUseSSL ? { rejectUnauthorized: false } : undefined;
+
+  if (hasUrl) {
+    return new Pool({ connectionString: process.env.DATABASE_URL, ssl });
   }
-})();
 
-const preferredDataRoot = isWritableTmp ? path.join('/tmp', 'secret-save-site') : path.join(__dirname, '..', 'data');
-const dataDir = preferredDataRoot;
-const dbFile = path.join(dataDir, 'secrets.sqlite');
-
-let db;
-
-function ensureDataDir() {
-  if (!fs.existsSync(dataDir)) {
-    fs.mkdirSync(dataDir, { recursive: true });
-  }
+  return new Pool({
+    host: process.env.PGHOST || 'localhost',
+    port: Number(process.env.PGPORT || 5432),
+    user: process.env.PGUSER || 'postgres',
+    password: process.env.PGPASSWORD,
+    database: process.env.PGDATABASE || 'postgres',
+    ssl,
+  });
 }
+
+const pool = createPool();
+
+pool.on('error', (err) => {
+  console.error('Unexpected PostgreSQL client error', err);
+});
+
+// Graceful shutdown to avoid hanging clients on process exit
+function setupGracefulShutdown() {
+  const shutdown = async (signal) => {
+    try {
+      await pool.end();
+    } catch (e) {
+      // noop
+    } finally {
+      process.exit(signal === 'SIGTERM' ? 0 : 0);
+    }
+  };
+  process.on('SIGTERM', () => shutdown('SIGTERM'));
+  process.on('SIGINT', () => shutdown('SIGINT'));
+}
+
+setupGracefulShutdown();
 
 async function init() {
-  ensureDataDir();
-  db = new sqlite3.Database(dbFile);
-  await run(
-    `CREATE TABLE IF NOT EXISTS secrets (
+  // Create table with conventional snake_case column names
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS secrets (
       id TEXT PRIMARY KEY,
-      secretText TEXT NOT NULL,
+      secret_text TEXT NOT NULL,
       timezone TEXT NOT NULL,
-      schedule TEXT NOT NULL,
-      createdAt TEXT NOT NULL,
-      lockedAt TEXT
-    )`
-  );
+      schedule JSONB NOT NULL,
+      created_at TIMESTAMPTZ NOT NULL,
+      locked_at TIMESTAMPTZ
+    )
+  `);
 }
 
-function run(sql, params = []) {
-  return new Promise((resolve, reject) => {
-    db.run(sql, params, function (err) {
-      if (err) return reject(err);
-      resolve(this);
-    });
-  });
-}
-
-function get(sql, params = []) {
-  return new Promise((resolve, reject) => {
-    db.get(sql, params, (err, row) => {
-      if (err) return reject(err);
-      resolve(row);
-    });
-  });
-}
-
-function all(sql, params = []) {
-  return new Promise((resolve, reject) => {
-    db.all(sql, params, (err, rows) => {
-      if (err) return reject(err);
-      resolve(rows || []);
-    });
-  });
+function parseScheduleValue(raw) {
+  if (raw == null) return null;
+  if (typeof raw === 'string') {
+    try { return JSON.parse(raw); } catch (_e) { return null; }
+  }
+  return raw;
 }
 
 async function createSecret({ id, secretText, timezone, schedule, createdAt, lockedAt }) {
-  const scheduleJson = JSON.stringify(schedule);
-  await run(
-    `INSERT INTO secrets (id, secretText, timezone, schedule, createdAt, lockedAt)
-     VALUES (?, ?, ?, ?, ?, ?)`,
-    [id, secretText, timezone, scheduleJson, createdAt, lockedAt]
+  await pool.query(
+    `INSERT INTO secrets (id, secret_text, timezone, schedule, created_at, locked_at)
+     VALUES ($1, $2, $3, $4::jsonb, $5::timestamptz, $6::timestamptz)`,
+    [id, secretText, timezone, JSON.stringify(schedule), createdAt, lockedAt]
   );
 }
 
 async function getSecret(id) {
-  const row = await get(`SELECT * FROM secrets WHERE id = ?`, [id]);
+  const { rows } = await pool.query(
+    `SELECT id,
+            secret_text AS "secretText",
+            timezone,
+            schedule,
+            created_at AS "createdAt",
+            locked_at AS "lockedAt"
+       FROM secrets
+      WHERE id = $1
+      LIMIT 1`,
+    [id]
+  );
+  const row = rows[0];
   if (!row) return null;
   return {
     id: row.id,
     secretText: row.secretText,
     timezone: row.timezone,
-    schedule: JSON.parse(row.schedule),
-    createdAt: row.createdAt,
-    lockedAt: row.lockedAt,
+    schedule: parseScheduleValue(row.schedule),
+    createdAt: row.createdAt instanceof Date ? row.createdAt.toISOString() : row.createdAt,
+    lockedAt: row.lockedAt instanceof Date ? row.lockedAt.toISOString() : row.lockedAt,
   };
 }
 
 async function listSecrets() {
-  const rows = await all(`SELECT * FROM secrets ORDER BY datetime(createdAt) DESC`, []);
+  const { rows } = await pool.query(
+    `SELECT id,
+            secret_text AS "secretText",
+            timezone,
+            schedule,
+            created_at AS "createdAt",
+            locked_at AS "lockedAt"
+       FROM secrets
+   ORDER BY created_at DESC`
+  );
   return rows.map((row) => ({
     id: row.id,
     secretText: row.secretText,
     timezone: row.timezone,
-    schedule: JSON.parse(row.schedule),
-    createdAt: row.createdAt,
-    lockedAt: row.lockedAt,
+    schedule: parseScheduleValue(row.schedule),
+    createdAt: row.createdAt instanceof Date ? row.createdAt.toISOString() : row.createdAt,
+    lockedAt: row.lockedAt instanceof Date ? row.lockedAt.toISOString() : row.lockedAt,
   }));
 }
 
 async function lockSecret(id, lockedAt) {
-  await run(`UPDATE secrets SET lockedAt = ? WHERE id = ?`, [lockedAt, id]);
+  await pool.query(
+    `UPDATE secrets SET locked_at = $1::timestamptz WHERE id = $2`,
+    [lockedAt, id]
+  );
 }
 
 async function updateSecretSchedule(id, timezone, schedule) {
-  const scheduleJson = JSON.stringify(schedule);
-  await run(`UPDATE secrets SET timezone = ?, schedule = ? WHERE id = ?`, [timezone, scheduleJson, id]);
+  await pool.query(
+    `UPDATE secrets SET timezone = $1, schedule = $2::jsonb WHERE id = $3`,
+    [timezone, JSON.stringify(schedule), id]
+  );
 }
 
 module.exports = {
