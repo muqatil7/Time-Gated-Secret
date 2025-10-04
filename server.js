@@ -88,7 +88,8 @@ app.get('/list', async (_req, res) => {
       preview: visible ? s.secretText : null,
     };
   });
-  res.render('list', { title: 'All Secrets', items });
+  const message = _req.query && _req.query.msg ? String(_req.query.msg) : '';
+  res.render('list', { title: 'All Secrets', items, message });
 });
 
 app.get('/new', (req, res) => {
@@ -244,6 +245,43 @@ app.post('/s/:id/update-schedule', async (req, res) => {
   }
 
   return res.redirect(`/s/${id}`);
+});
+
+app.post('/s/:id/delete', async (req, res) => {
+  const { id } = req.params;
+  const { confirm = '' } = req.body || {};
+  const secret = await db.getSecret(id);
+  if (!secret) {
+    return res.status(404).render('not_found', { title: 'Not Found' });
+  }
+  const isVisible = isSecretVisibleNow(secret.schedule, secret.timezone);
+  if (!isVisible) {
+    return res.status(403).render('show', {
+      title: 'Secret',
+      secret,
+      isVisible,
+      canModifySchedule: false,
+      scheduleRows: scheduleToDisplayRows(secret.schedule),
+      errors: ['Cannot delete while the secret is hidden. Try again during a visible window.'],
+    });
+  }
+  if (String(confirm).trim().toLowerCase() !== id.toLowerCase()) {
+    return res.status(400).render('show', {
+      title: 'Secret',
+      secret,
+      isVisible,
+      canModifySchedule: false,
+      scheduleRows: scheduleToDisplayRows(secret.schedule),
+      errors: ['Deletion confirmation failed. Type the exact ID to confirm.'],
+    });
+  }
+  try {
+    await db.deleteSecret(id);
+  } catch (e) {
+    console.error('Failed to delete secret', e);
+    return res.status(500).send('Internal Server Error');
+  }
+  return res.redirect('/list?msg=Secret%20deleted');
 });
 
 app.use((req, res) => {

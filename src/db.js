@@ -139,6 +139,10 @@ async function updateSecretSchedule(id, timezone, schedule) {
   );
 }
 
+async function deleteSecret(id) {
+  await pool.query(`DELETE FROM secrets WHERE id = $1`, [id]);
+}
+
 module.exports = {
   init,
   createSecret,
@@ -146,6 +150,7 @@ module.exports = {
   lockSecret,
   updateSecretSchedule,
   listSecrets,
+  deleteSecret,
 };
 
 

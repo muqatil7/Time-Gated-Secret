@@ -18,6 +18,10 @@
       <a href="/new" class="inline-flex items-center rounded-md px-3 py-1.5 border border-slate-600 hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500">Create new</a>
     </header>
 
+    <% if (typeof message !== 'undefined' && message) { %>
+      <div class="mt-4 rounded-md border border-green-300 bg-green-900/20 p-3 text-green-200"><%= message %></div>
+    <% } %>
+
     <main class="mt-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" role="main" aria-label="Secrets list">
       <% if (!items || !items.length) { %>
         <div class="text-slate-400">No secrets yet.</div>

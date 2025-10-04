@@ -39,6 +39,7 @@ Routes
 - `/list` → list all secrets with visibility status and previews when visible
 - `/s/:id` → show a specific secret; manage schedule only while visible and before any hidden period
 - `/s/:id/update-schedule` → POST endpoint to update timezone/schedule (visible and not locked only)
+- `/s/:id/delete` → POST endpoint to delete a secret (requires strict confirmation)
 - `/healthz` → health check
 - `/robots.txt` → disallow crawling
 
@@ -48,6 +49,7 @@ Usage
 3. Submit to get your secret URL `/s/:id` (example: `/s/secret-1`)
 4. While visible and before any hidden period happens, you may adjust the schedule/time zone at `/s/:id`
 5. After a hidden period is detected (or currently hidden), updates are blocked permanently
+  - To delete, open `/s/:id` while the secret is currently visible, scroll to Danger zone, type the exact ID as confirmation, and submit. You will be redirected to `/list` with a success banner. Deletion is blocked during hidden periods.
 
 UI/UX details
 - Global dark theme with `color-scheme: dark` and CSS variables in `public/styles.css`

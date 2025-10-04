@@ -104,6 +104,20 @@
           <div class="text-sm text-slate-400">Schedule changes are only allowed during visible windows and before the secret ever enters a hidden period. Once a hidden period occurs, changes are permanently disabled.</div>
         <% } %>
       </div>
+
+      <div class="rounded-lg border card p-4 shadow-sm md:col-span-2">
+        <h2 class="text-lg font-semibold mb-2" style="color:#fca5a5;">Danger zone</h2>
+        <p class="text-sm text-slate-300 mb-3">Deleting a secret is permanent and cannot be undone.</p>
+        <% if (isVisible) { %>
+          <form method="POST" action="/s/<%= secret.id %>/delete" class="space-y-3" onsubmit="return confirm('This action permanently deletes this secret. Type the exact ID to confirm, then submit.');">
+            <label class="block text-sm" for="confirm">Type the ID to confirm deletion: <span class="font-mono"><%= secret.id %></span></label>
+            <input id="confirm" name="confirm" type="text" required class="w-full rounded-md border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-500" placeholder="<%= secret.id %>" />
+            <button type="submit" class="inline-flex items-center justify-center rounded-md bg-red-600 px-4 py-2 text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500">Delete secret</button>
+          </form>
+        <% } else { %>
+          <div class="text-sm text-slate-400">Deletion is disabled while hidden. Come back during a visible window to delete.</div>
+        <% } %>
+      </div>
     </div>
   </div>
 </body>
