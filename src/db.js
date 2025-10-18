@@ -38,7 +38,7 @@ function loadConfig() {
 
   let projectId = getEnv('FIREBASE_PROJECT_ID');
   let clientEmail = getEnv('FIREBASE_CLIENT_EMAIL');
-  let privateKey = process.env.FIREBASE_PRIVATE_KEY;
+  let privateKey = getEnv('FIREBASE_PRIVATE_KEY');
 
   if (!projectId || !clientEmail || !privateKey) {
     const fromServiceAccount =
@@ -58,6 +58,7 @@ function loadConfig() {
     );
   }
 
+  privateKey = privateKey.replace(/\r\n/g, '\n');
   privateKey = privateKey.replace(/\\n/g, '\n');
 
   firestoreConfig = { projectId, clientEmail, privateKey };

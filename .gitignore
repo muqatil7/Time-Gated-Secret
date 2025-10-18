@@ -5,3 +5,8 @@ yarn-error.log*
 dist/
 .DS_Store
 data/
+
+# Firebase service account credentials (keep secrets out of git)
+firebase-service-account.json
+*.service-account.json
+*.firebase-key.json
