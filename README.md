@@ -15,13 +15,13 @@ Key behavior
 - Once the secret ever enters a hidden period, further changes are permanently locked
 - Schedule updates are only allowed while the secret is visible and before any hidden period has occurred
 - Time zone must be a valid IANA zone (e.g., Africa/Cairo, Europe/London)
-- No cookies/localStorage; server-side PostgreSQL only
+- No cookies/localStorage; server-side persistence via Firebase Firestore
 - Responses are sent with Cache-Control: no-store to avoid caching
  - IDs are chosen by the user at creation time (no random IDs). They must be unique and match: 3–63 characters, lowercase letters, numbers, hyphens (e.g., `secret-1`). Reserved IDs: `new`, `list`, `healthz`, `robots.txt`.
 
 Tech
 - Node.js + Express + EJS
-- PostgreSQL via `pg`
+- Firebase Firestore (via service account REST API)
 - Time math with luxon
 - Styling via Tailwind CDN + `public/styles.css` (no build step)
 
@@ -63,7 +63,7 @@ UI/UX details
 Data & security
 - Plaintext storage for demonstration only; do not store sensitive data
 - No authentication; anyone with the URL can view when visible
-- Database: PostgreSQL (JSONB schedule, timestamptz timestamps)
+- Database: Firebase Firestore (schedule stored as JSON string, timestamps stored as Firestore timestamps)
 
 Project structure
 ```
@@ -87,28 +87,16 @@ c:\Work_space\Secret-save-site\
 Configuration
 - Environment variables:
   - `PORT` (optional, default 3000)
-  - `DATABASE_URL` (recommended): full PostgreSQL URL, e.g. `postgresql://user:pass@host:5432/dbname`
-  - `DATABASE_SSL` (optional): set to `require` when your provider needs SSL (Render external URLs)
-  - Alternatively, you may use standard PG env vars: `PGHOST`, `PGPORT`, `PGUSER`, `PGPASSWORD`, `PGDATABASE`
-
-Render example (use one):
-
-Internal URL (within Render private network):
-```
-postgresql://save_secret_user:<PASSWORD>@dpg-d3geup95pdvs73eeqp00-a/save_secret
-```
-
-External URL (public, requires SSL):
-```
-postgresql://save_secret_user:<PASSWORD>@dpg-d3geup95pdvs73eeqp00-a.oregon-postgres.render.com/save_secret
-# set DATABASE_SSL=require
-```
-
-CLI check:
-```
-PGPASSWORD=<PASSWORD> psql -h dpg-d3geup95pdvs73eeqp00-a.oregon-postgres.render.com -U save_secret_user save_secret
-```
-
+  - `FIREBASE_PROJECT_ID`: Firebase project ID (e.g. `secret-time-7f086`)
+  - `FIREBASE_CLIENT_EMAIL`: service account client email
+  - `FIREBASE_PRIVATE_KEY`: service account private key (wrap in quotes and replace actual newlines with `\n` when using `.env`)
+- The server authenticates with Google via OAuth2 JWT and talks to the Firestore REST API. Ensure the service account has the **Cloud Datastore User** role (or broader) so it can read/write Firestore.
+- Secrets are stored in the `secrets` collection within the default Firestore database. Each document is named after the custom ID and contains the following fields:
+  - `secretText` (string)
+  - `timezone` (string)
+  - `schedule` (stringified JSON schedule)
+  - `createdAt` (timestamp)
+  - `lockedAt` (timestamp or null)
 - Client defaults:
   - On `/new`, `public/app.js` sets the timezone input to `Africa/Cairo` only if the field is empty or currently `UTC`
 
@@ -117,21 +105,9 @@ Development notes
 - Client script: `public/app.js` (dark hint + default tz behavior)
 - Helmet CSP is configured to allow Tailwind CDN and inline styles for this setup
 
-Database schema (auto-created on boot):
-```
-CREATE TABLE IF NOT EXISTS secrets (
-  id TEXT PRIMARY KEY,
-  secret_text TEXT NOT NULL,
-  timezone TEXT NOT NULL,
-  schedule JSONB NOT NULL,
-  created_at TIMESTAMPTZ NOT NULL,
-  locked_at TIMESTAMPTZ
-);
-```
-
-Notes:
-- `schedule` is stored as JSONB. Timestamps are ISO and stored as timestamptz.
-- Set `DATABASE_URL` in production. For Render external URLs, set `DATABASE_SSL=require`.
+Firestore data model:
+- `schedule` is persisted as a JSON string. It is parsed on read before being used by the scheduler logic.
+- `createdAt`/`lockedAt` are Firestore timestamp fields encoded as ISO strings when returned by the API.
 
 License
 MIT
