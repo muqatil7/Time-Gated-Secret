@@ -1,4 +1,5 @@
 const crypto = require('crypto');
+const fs = require('fs');
 
 let firestoreConfig = null;
 let accessTokenCache = null;
@@ -8,15 +9,53 @@ function getEnv(name) {
   return typeof value === 'string' && value.trim().length > 0 ? value.trim() : null;
 }
 
+function parseServiceAccountJSON(source) {
+  if (!source) return null;
+
+  let jsonString = source;
+
+  if (fs.existsSync(source)) {
+    jsonString = fs.readFileSync(source, 'utf8');
+  }
+
+  try {
+    const parsed = JSON.parse(jsonString);
+    if (!parsed.project_id || !parsed.client_email || !parsed.private_key) {
+      return null;
+    }
+    return {
+      projectId: parsed.project_id,
+      clientEmail: parsed.client_email,
+      privateKey: parsed.private_key,
+    };
+  } catch (_err) {
+    return null;
+  }
+}
+
 function loadConfig() {
   if (firestoreConfig) return firestoreConfig;
 
-  const projectId = getEnv('FIREBASE_PROJECT_ID');
-  const clientEmail = getEnv('FIREBASE_CLIENT_EMAIL');
+  let projectId = getEnv('FIREBASE_PROJECT_ID');
+  let clientEmail = getEnv('FIREBASE_CLIENT_EMAIL');
   let privateKey = process.env.FIREBASE_PRIVATE_KEY;
 
   if (!projectId || !clientEmail || !privateKey) {
-    throw new Error('Missing Firebase configuration. Set FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL, and FIREBASE_PRIVATE_KEY.');
+    const fromServiceAccount =
+      parseServiceAccountJSON(getEnv('FIREBASE_SERVICE_ACCOUNT_JSON')) ||
+      parseServiceAccountJSON(getEnv('FIREBASE_SERVICE_ACCOUNT_FILE'));
+
+    if (fromServiceAccount) {
+      projectId = projectId || fromServiceAccount.projectId;
+      clientEmail = clientEmail || fromServiceAccount.clientEmail;
+      privateKey = privateKey || fromServiceAccount.privateKey;
+    }
+  }
+
+  if (!projectId || !clientEmail || !privateKey) {
+    throw new Error(
+      'Missing Firebase service-account credentials. Provide FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL, and FIREBASE_PRIVATE_KEY (or FIREBASE_SERVICE_ACCOUNT_JSON / FIREBASE_SERVICE_ACCOUNT_FILE). Note: the web SDK config with apiKey/authDomain is not sufficient for server access.'
+    );
   }
 
   privateKey = privateKey.replace(/\\n/g, '\n');

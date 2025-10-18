@@ -84,13 +84,16 @@ c:\Work_space\Secret-save-site\
   └─ README.md
 ```
 
-Configuration
-- Environment variables:
-  - `PORT` (optional, default 3000)
-  - `FIREBASE_PROJECT_ID`: Firebase project ID (e.g. `secret-time-7f086`)
-  - `FIREBASE_CLIENT_EMAIL`: service account client email
-  - `FIREBASE_PRIVATE_KEY`: service account private key (wrap in quotes and replace actual newlines with `\n` when using `.env`)
-- The server authenticates with Google via OAuth2 JWT and talks to the Firestore REST API. Ensure the service account has the **Cloud Datastore User** role (or broader) so it can read/write Firestore.
+- Configuration
+  - Environment variables:
+    - `PORT` (optional, default 3000)
+    - `FIREBASE_PROJECT_ID`: Firebase project ID (e.g. `secret-time-7f086`)
+    - `FIREBASE_CLIENT_EMAIL`: service-account client email
+    - `FIREBASE_PRIVATE_KEY`: service-account private key (wrap in quotes and replace actual newlines with `\n` when using `.env`)
+    - `FIREBASE_SERVICE_ACCOUNT_JSON` *(optional)*: inline JSON for the Firebase service-account key. When provided, the file is parsed and used to populate any missing variables above.
+    - `FIREBASE_SERVICE_ACCOUNT_FILE` *(optional)*: filesystem path to a JSON key downloaded from **Project Settings → Service accounts → Generate new private key**. Parsed the same way as the inline JSON variable.
+  - The server authenticates with Google via OAuth2 JWT and talks to the Firestore REST API. Ensure the service account has the **Cloud Datastore User** role (or broader) so it can read/write Firestore.
+  - :warning: The Firebase Web SDK config (`apiKey`, `authDomain`, `appId`, etc.) is *not* sufficient for this backend. Those values are safe for client-side apps but cannot authenticate this server to Firestore. Use a service-account key instead.
 - Secrets are stored in the `secrets` collection within the default Firestore database. Each document is named after the custom ID and contains the following fields:
   - `secretText` (string)
   - `timezone` (string)
