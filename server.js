@@ -154,7 +154,7 @@ app.post('/secret', async (req, res) => {
     await db.createSecret({ id, secretText, timezone, schedule, createdAt, lockedAt });
   } catch (e) {
     // Handle rare race: unique violation
-    if (e && e.code === '23505') {
+    if (e && (e.code === '23505' || e.code === 'ALREADY_EXISTS')) {
       return res.status(400).render('new', {
         title: 'Create Secret',
         defaultTimezone: timezone || 'UTC',

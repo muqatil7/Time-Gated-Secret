@@ -1,146 +1,291 @@
-const { Pool } = require('pg');
+const crypto = require('crypto');
+const fs = require('fs');
 
-// Build a robust Pool configuration that works locally and on Render
-function createPool() {
-  const hasUrl = !!process.env.DATABASE_URL;
-  const shouldUseSSL = (() => {
-    const sslEnv = String(process.env.DATABASE_SSL || process.env.PGSSLMODE || '').toLowerCase();
-    if (sslEnv === 'require' || sslEnv === 'true') return true;
-    if (process.env.NODE_ENV === 'production' && /render\.com/.test(process.env.DATABASE_URL || '')) return true;
-    return false;
-  })();
+let firestoreConfig = null;
+let accessTokenCache = null;
 
-  const ssl = shouldUseSSL ? { rejectUnauthorized: false } : undefined;
+function getEnv(name) {
+  const value = process.env[name];
+  return typeof value === 'string' && value.trim().length > 0 ? value.trim() : null;
+}
 
-  if (hasUrl) {
-    return new Pool({ connectionString: process.env.DATABASE_URL, ssl });
+function parseServiceAccountJSON(source) {
+  if (!source) return null;
+
+  let jsonString = source;
+
+  if (fs.existsSync(source)) {
+    jsonString = fs.readFileSync(source, 'utf8');
   }
 
-  return new Pool({
-    host: process.env.PGHOST || 'localhost',
-    port: Number(process.env.PGPORT || 5432),
-    user: process.env.PGUSER || 'postgres',
-    password: process.env.PGPASSWORD,
-    database: process.env.PGDATABASE || 'postgres',
-    ssl,
-  });
-}
-
-const pool = createPool();
-
-pool.on('error', (err) => {
-  console.error('Unexpected PostgreSQL client error', err);
-});
-
-// Graceful shutdown to avoid hanging clients on process exit
-function setupGracefulShutdown() {
-  const shutdown = async (signal) => {
-    try {
-      await pool.end();
-    } catch (e) {
-      // noop
-    } finally {
-      process.exit(signal === 'SIGTERM' ? 0 : 0);
+  try {
+    const parsed = JSON.parse(jsonString);
+    if (!parsed.project_id || !parsed.client_email || !parsed.private_key) {
+      return null;
     }
-  };
-  process.on('SIGTERM', () => shutdown('SIGTERM'));
-  process.on('SIGINT', () => shutdown('SIGINT'));
+    return {
+      projectId: parsed.project_id,
+      clientEmail: parsed.client_email,
+      privateKey: parsed.private_key,
+    };
+  } catch (_err) {
+    return null;
+  }
 }
 
-setupGracefulShutdown();
+function loadConfig() {
+  if (firestoreConfig) return firestoreConfig;
+
+  let projectId = getEnv('FIREBASE_PROJECT_ID');
+  let clientEmail = getEnv('FIREBASE_CLIENT_EMAIL');
+  let privateKey = getEnv('FIREBASE_PRIVATE_KEY');
+
+  if (!projectId || !clientEmail || !privateKey) {
+    const fromServiceAccount =
+      parseServiceAccountJSON(getEnv('FIREBASE_SERVICE_ACCOUNT_JSON')) ||
+      parseServiceAccountJSON(getEnv('FIREBASE_SERVICE_ACCOUNT_FILE'));
+
+    if (fromServiceAccount) {
+      projectId = projectId || fromServiceAccount.projectId;
+      clientEmail = clientEmail || fromServiceAccount.clientEmail;
+      privateKey = privateKey || fromServiceAccount.privateKey;
+    }
+  }
+
+  if (!projectId || !clientEmail || !privateKey) {
+    throw new Error(
+      'Missing Firebase service-account credentials. Provide FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL, and FIREBASE_PRIVATE_KEY (or FIREBASE_SERVICE_ACCOUNT_JSON / FIREBASE_SERVICE_ACCOUNT_FILE). Note: the web SDK config with apiKey/authDomain is not sufficient for server access.'
+    );
+  }
+
+  privateKey = privateKey.replace(/\r\n/g, '\n');
+  privateKey = privateKey.replace(/\\n/g, '\n');
+
+  firestoreConfig = { projectId, clientEmail, privateKey };
+  return firestoreConfig;
+}
+
+function base64UrlEncode(data) {
+  return Buffer.from(data)
+    .toString('base64')
+    .replace(/=/g, '')
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_');
+}
+
+async function fetchAccessToken() {
+  const { clientEmail, privateKey } = loadConfig();
+  const now = Math.floor(Date.now() / 1000);
+  const payload = {
+    iss: clientEmail,
+    scope: 'https://www.googleapis.com/auth/datastore',
+    aud: 'https://oauth2.googleapis.com/token',
+    exp: now + 3600,
+    iat: now,
+  };
+
+  const header = { alg: 'RS256', typ: 'JWT' };
+  const unsignedToken = `${base64UrlEncode(JSON.stringify(header))}.${base64UrlEncode(JSON.stringify(payload))}`;
+  const signer = crypto.createSign('RSA-SHA256');
+  signer.update(unsignedToken);
+  const signature = signer.sign(privateKey);
+  const assertion = `${unsignedToken}.${base64UrlEncode(signature)}`;
+
+  const params = new URLSearchParams();
+  params.append('grant_type', 'urn:ietf:params:oauth:grant-type:jwt-bearer');
+  params.append('assertion', assertion);
+
+  const response = await fetch('https://oauth2.googleapis.com/token', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: params.toString(),
+  });
+
+  if (!response.ok) {
+    const text = await response.text();
+    throw Object.assign(new Error(`Failed to obtain Firebase access token: ${text}`), {
+      status: response.status,
+    });
+  }
+
+  const json = await response.json();
+  const expiresIn = Number(json.expires_in || 0);
+  accessTokenCache = {
+    token: json.access_token,
+    expiresAt: Date.now() + Math.max(0, (expiresIn - 60) * 1000),
+  };
+  return accessTokenCache.token;
+}
+
+async function getAccessToken() {
+  if (accessTokenCache && accessTokenCache.token && accessTokenCache.expiresAt > Date.now()) {
+    return accessTokenCache.token;
+  }
+  return fetchAccessToken();
+}
+
+function buildFirestoreUrl(path, query = {}) {
+  const { projectId } = loadConfig();
+  const base = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)`;
+  const search = new URLSearchParams();
+  Object.entries(query).forEach(([key, value]) => {
+    if (Array.isArray(value)) {
+      value.forEach((v) => search.append(key, v));
+    } else if (value != null) {
+      search.append(key, String(value));
+    }
+  });
+  const queryString = search.toString();
+  return `${base}${path}${queryString ? `?${queryString}` : ''}`;
+}
+
+async function callFirestore(method, path, body, query) {
+  const token = await getAccessToken();
+  const response = await fetch(buildFirestoreUrl(path, query), {
+    method,
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    body: body ? JSON.stringify(body) : undefined,
+  });
+
+  if (!response.ok) {
+    let errorPayload;
+    try {
+      errorPayload = await response.json();
+    } catch (_e) {
+      errorPayload = { error: { message: response.statusText } };
+    }
+    const error = new Error(errorPayload.error?.message || 'Firestore request failed');
+    error.code = errorPayload.error?.status || response.status;
+    error.status = response.status;
+    throw error;
+  }
+
+  if (response.status === 204) return null;
+  return response.json();
+}
+
+function stringField(value) {
+  return { stringValue: value }; 
+}
+
+function timestampField(value) {
+  return { timestampValue: value };
+}
+
+function nullField() {
+  return { nullValue: null };
+}
+
+function buildSecretFields({ id, secretText, timezone, schedule, createdAt, lockedAt }) {
+  const fields = {
+    id: stringField(id),
+    secretText: stringField(secretText),
+    timezone: stringField(timezone),
+    schedule: stringField(JSON.stringify(schedule)),
+    createdAt: timestampField(createdAt),
+  };
+  fields.lockedAt = lockedAt ? timestampField(lockedAt) : nullField();
+  return fields;
+}
+
+function parseTimestampField(field) {
+  if (!field) return null;
+  if (typeof field.timestampValue === 'string') return field.timestampValue;
+  if (typeof field.stringValue === 'string') return field.stringValue;
+  return null;
+}
+
+function parseSecretDocument(doc) {
+  if (!doc || !doc.fields) return null;
+  const { fields } = doc;
+  const scheduleRaw = fields.schedule?.stringValue;
+  let schedule = null;
+  if (typeof scheduleRaw === 'string') {
+    try {
+      schedule = JSON.parse(scheduleRaw);
+    } catch (_e) {
+      schedule = null;
+    }
+  }
+
+  return {
+    id: fields.id?.stringValue || doc.name.split('/').pop(),
+    secretText: fields.secretText?.stringValue || '',
+    timezone: fields.timezone?.stringValue || 'UTC',
+    schedule: schedule || { version: 1, windowsPerDay: {} },
+    createdAt: parseTimestampField(fields.createdAt),
+    lockedAt: parseTimestampField(fields.lockedAt),
+  };
+}
 
 async function init() {
-  // Create table with conventional snake_case column names
-  await pool.query(`
-    CREATE TABLE IF NOT EXISTS secrets (
-      id TEXT PRIMARY KEY,
-      secret_text TEXT NOT NULL,
-      timezone TEXT NOT NULL,
-      schedule JSONB NOT NULL,
-      created_at TIMESTAMPTZ NOT NULL,
-      locked_at TIMESTAMPTZ
-    )
-  `);
-}
-
-function parseScheduleValue(raw) {
-  if (raw == null) return null;
-  if (typeof raw === 'string') {
-    try { return JSON.parse(raw); } catch (_e) { return null; }
-  }
-  return raw;
+  loadConfig();
+  await getAccessToken();
 }
 
 async function createSecret({ id, secretText, timezone, schedule, createdAt, lockedAt }) {
-  await pool.query(
-    `INSERT INTO secrets (id, secret_text, timezone, schedule, created_at, locked_at)
-     VALUES ($1, $2, $3, $4::jsonb, $5::timestamptz, $6::timestamptz)`,
-    [id, secretText, timezone, JSON.stringify(schedule), createdAt, lockedAt]
+  const fields = buildSecretFields({ id, secretText, timezone, schedule, createdAt, lockedAt });
+  await callFirestore(
+    'PATCH',
+    `/documents/secrets/${encodeURIComponent(id)}`,
+    { fields },
+    { 'currentDocument.exists': 'false' }
   );
 }
 
 async function getSecret(id) {
-  const { rows } = await pool.query(
-    `SELECT id,
-            secret_text AS "secretText",
-            timezone,
-            schedule,
-            created_at AS "createdAt",
-            locked_at AS "lockedAt"
-       FROM secrets
-      WHERE id = $1
-      LIMIT 1`,
-    [id]
-  );
-  const row = rows[0];
-  if (!row) return null;
-  return {
-    id: row.id,
-    secretText: row.secretText,
-    timezone: row.timezone,
-    schedule: parseScheduleValue(row.schedule),
-    createdAt: row.createdAt instanceof Date ? row.createdAt.toISOString() : row.createdAt,
-    lockedAt: row.lockedAt instanceof Date ? row.lockedAt.toISOString() : row.lockedAt,
-  };
+  try {
+    const doc = await callFirestore('GET', `/documents/secrets/${encodeURIComponent(id)}`, null, {});
+    return parseSecretDocument(doc);
+  } catch (e) {
+    if (e.status === 404 || e.code === 'NOT_FOUND') return null;
+    throw e;
+  }
 }
 
 async function listSecrets() {
-  const { rows } = await pool.query(
-    `SELECT id,
-            secret_text AS "secretText",
-            timezone,
-            schedule,
-            created_at AS "createdAt",
-            locked_at AS "lockedAt"
-       FROM secrets
-   ORDER BY created_at DESC`
-  );
-  return rows.map((row) => ({
-    id: row.id,
-    secretText: row.secretText,
-    timezone: row.timezone,
-    schedule: parseScheduleValue(row.schedule),
-    createdAt: row.createdAt instanceof Date ? row.createdAt.toISOString() : row.createdAt,
-    lockedAt: row.lockedAt instanceof Date ? row.lockedAt.toISOString() : row.lockedAt,
-  }));
+  const result = await callFirestore('GET', '/documents/secrets', null, {
+    orderBy: 'createdAt desc',
+    pageSize: 1000,
+  });
+  const documents = result.documents || [];
+  return documents.map(parseSecretDocument).filter(Boolean);
 }
 
 async function lockSecret(id, lockedAt) {
-  await pool.query(
-    `UPDATE secrets SET locked_at = $1::timestamptz WHERE id = $2`,
-    [lockedAt, id]
+  await callFirestore(
+    'PATCH',
+    `/documents/secrets/${encodeURIComponent(id)}`,
+    {
+      fields: {
+        lockedAt: timestampField(lockedAt),
+      },
+    },
+    { 'updateMask.fieldPaths': 'lockedAt' }
   );
 }
 
 async function updateSecretSchedule(id, timezone, schedule) {
-  await pool.query(
-    `UPDATE secrets SET timezone = $1, schedule = $2::jsonb WHERE id = $3`,
-    [timezone, JSON.stringify(schedule), id]
+  await callFirestore(
+    'PATCH',
+    `/documents/secrets/${encodeURIComponent(id)}`,
+    {
+      fields: {
+        timezone: stringField(timezone),
+        schedule: stringField(JSON.stringify(schedule)),
+      },
+    },
+    {
+      'updateMask.fieldPaths': ['timezone', 'schedule'],
+    }
   );
 }
 
 async function deleteSecret(id) {
-  await pool.query(`DELETE FROM secrets WHERE id = $1`, [id]);
+  await callFirestore('DELETE', `/documents/secrets/${encodeURIComponent(id)}`, null, {});
 }
 
 module.exports = {
@@ -152,5 +297,3 @@ module.exports = {
   listSecrets,
   deleteSecret,
 };
-
-
