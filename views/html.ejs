@@ -8,17 +8,17 @@
   <link rel="stylesheet" href="/public/styles.css" />
 </head>
 <body class="min-h-screen antialiased">
+  <nav class="sticky top-0 w-full py-3 px-6 bg-slate-800 border-b border-indigo-700 shadow flex items-center justify-between z-10">
+    <a href="/pages" class="text-indigo-300 px-3 py-2 hover:bg-slate-700 rounded transition text-lg font-bold">عرض الصفحات</a>
+    <a href="/html" class="text-yellow-400 px-3 py-2 hover:bg-yellow-200 rounded transition text-lg font-bold">إنشاء / تعديل صفحة</a>
+  </nav>
   <div class="max-w-5xl mx-auto p-6">
     <header role="banner" class="flex items-start justify-between gap-3">
       <div>
         <h1 class="text-3xl font-bold mb-2">إدارة صفحات HTML</h1>
-        <p class="text-slate-400 mb-6">اسحب ملف HTML، الصق الكود أو أنشئ صفحة جديدة مع إدخال اسم لملفك وحفظها أو التعديل عليها.</p>
+        <p class="text-slate-400 mb-6">اسحب ملف HTML، أو أدخل أسماء أو أنشئ صفحة جديدة وابدأ بالحفظ أو التعديل.</p>
       </div>
-      <nav aria-label="Primary">
-        <a href="/list" class="inline-flex items-center rounded-md px-3 py-1.5 border border-slate-600 hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500">عرض القائمة</a>
-      </nav>
     </header>
-
     <form id="html-form" method="POST" action="/html" class="space-y-4">
       <div>
         <label class="block text-sm font-medium mb-1" for="page_name">اسم الصفحة</label>
@@ -27,22 +27,19 @@
       <div>
         <label class="block text-sm font-medium mb-1" for="html_code">كود HTML</label>
         <textarea id="html_code" name="html_code" rows="10" required class="w-full rounded-md border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="اسحب ملف HTML هنا أو الصق الكود..."></textarea>
-        <div id="drop-zone" class="mt-3 p-5 border border-dashed border-indigo-400 rounded bg-slate-900 text-slate-200 text-center cursor-pointer">
-          قم بسحب ملف HTML هنا لإسقاطه
-        </div>
+        <div id="drop-zone" class="mt-3 p-5 border border-dashed border-indigo-400 rounded bg-slate-900 text-slate-200 text-center cursor-pointer">قم بسحب ملف HTML هنا لإسقاطه</div>
       </div>
       <div class="flex gap-3">
         <button type="submit" name="save" value="1" class="inline-flex items-center justify-center rounded-md bg-indigo-600 px-4 py-2 text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500">حفظ أو تحديث</button>
       </div>
     </form>
-
     <div class="mt-6">
       <h2 class="text-lg font-bold mb-3">الصفحات المحفوظة</h2>
       <ul id="pages-list" class="list-disc pl-5 text-lg"></ul>
     </div>
   </div>
   <script>
-  // Drag & Drop HTML
+  // Drag & Drop HTML + جلب الصفحات المنظمة
   const dropZone = document.getElementById('drop-zone');
   const textarea = document.getElementById('html_code');
   dropZone.addEventListener('dragover', function(e) {
@@ -67,27 +64,13 @@
       setTimeout(() => { dropZone.textContent = "قم بسحب ملف HTML هنا لإسقاطه" }, 2000);
     }
   });
-  // جلب وعرض قائمة الصفحات المحفوظة
-  fetch('/pages')
-    .then(r => r.json())
-    .then(data => {
-      const list = document.getElementById('pages-list');
-      if (list && data.pages && data.pages.length) {
-        list.innerHTML = data.pages.map(p => `<li><span>${p}</span> <a href="/pages/${p}" target="_blank" class="text-indigo-400 ml-3">عرض</a> <a href="/pages/${p}/edit" class="text-yellow-400 ml-3">تعديل</a> <button onclick="deletePage('${p}')" class="text-red-500 ml-3">حذف</button></li>`).join('');
-      } else {
-        list.innerHTML = '<li class="text-sm text-gray-400">لا توجد صفحات محفوظة حاليا</li>';
-      }
-    }).catch(() => {
-      document.getElementById('pages-list').innerHTML = '<li>تعذر جلب الصفحات</li>';
-    });
-  function deletePage(page) {
-    if (!confirm('هل أنت متأكد أنك تريد حذف الصفحة؟')) return;
-    fetch(`/pages/${page}/delete`, {method:'POST'})
-    .then(resp=>{
-      if(resp.ok) location.reload();
-      else alert('تعذر حذف الصفحة.');
-    })
-  }
+  fetch('/pages').then(r=>r.json()).then(data=>{
+    const list=document.getElementById('pages-list');
+    if(list&&data.pages&&data.pages.length){
+      list.innerHTML=data.pages.map(p=>`<li><span>${p}</span> <a href="/pages/${p}" target="_blank" class="text-indigo-400 ml-3">عرض</a> <a href="/pages/${p}/edit" class="text-yellow-400 ml-3">تعديل</a> <button onclick="deletePage('${p}')" class="text-red-500 ml-3">حذف</button></li>`).join('');
+    }else{list.innerHTML='<li class="text-sm text-gray-400">لا توجد صفحات محفوظة حاليا</li>';}
+  }).catch(()=>{document.getElementById('pages-list').innerHTML='<li>تعذر جلب الصفحات</li>';});
+  function deletePage(page){if(!confirm('هل أنت متأكد أنك تريد حذف الصفحة؟'))return;fetch(`/pages/${page}/delete`,{method:'POST'}).then(resp=>{if(resp.ok)location.reload();else alert('تعذر حذف الصفحة.');})}
   </script>
 </body>
 </html>
