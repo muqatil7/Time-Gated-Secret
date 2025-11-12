@@ -16,14 +16,17 @@ const {
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Security hardening
+// Security hardening - Modified to allow all script sources
 app.use(helmet({
   contentSecurityPolicy: {
     useDefaults: true,
     directives: {
-      'script-src': ["'self'", 'https://cdn.tailwindcss.com'],
-      'style-src': ["'self'", "'unsafe-inline'"],
-      'img-src': ["'self'", 'data:'],
+      'script-src': ["'self'", "'unsafe-inline'", "'unsafe-eval'", '*'],
+      'style-src': ["'self'", "'unsafe-inline'", '*'],
+      'img-src': ["'self'", 'data:', '*'],
+      'connect-src': ["'self'", '*'],
+      'font-src': ["'self'", '*'],
+      'frame-src': ["'self'", '*'],
     },
   },
   crossOriginEmbedderPolicy: false,
