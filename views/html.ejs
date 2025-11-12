@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>عرض HTML</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="/public/styles.css" />
+</head>
+<body class="min-h-screen antialiased">
+  <div class="max-w-5xl mx-auto p-6">
+    <header role="banner" class="flex items-start justify-between gap-3">
+      <div>
+        <h1 class="text-3xl font-bold mb-2">عرض كود HTML</h1>
+        <p class="text-slate-400 mb-6">الصق كود HTML الخاص بك في المربع أدناه لعرضه في صفحة كاملة.</p>
+      </div>
+      <nav aria-label="Primary">
+        <a href="/list" class="inline-flex items-center rounded-md px-3 py-1.5 border border-slate-600 hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500">عرض القائمة</a>
+      </nav>
+    </header>
+
+    <form method="POST" action="/html" class="space-y-6">
+      <div>
+        <label class="block text-sm font-medium mb-1" for="html_code">كود HTML</label>
+        <textarea id="html_code" name="html_code" rows="10" required class="w-full rounded-md border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="الصق كود HTML هنا..."></textarea>
+      </div>
+
+      <div class="flex gap-3">
+        <button type="submit" class="inline-flex items-center justify-center rounded-md bg-indigo-600 px-4 py-2 text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500">عرض</button>
+      </div>
+    </form>
+  </div>
+</body>
+</html>

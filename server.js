@@ -104,6 +104,15 @@ app.get('/new', (req, res) => {
   });
 });
 
+app.get('/html', (req, res) => {
+  res.render('html', { title: 'عرض HTML' });
+});
+
+app.post('/html', (req, res) => {
+  const { html_code } = req.body;
+  res.send(html_code);
+});
+
 app.post('/secret', async (req, res) => {
   const { id: rawId = '', secretText = '', timezone = '' } = req.body;
   const errors = [];
@@ -289,5 +298,3 @@ app.use((req, res) => {
 });
 
 // server starts in db.init().then(...)
-
-
