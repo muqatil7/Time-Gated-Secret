@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تعديل الصفحة - HTML Gallery</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/theme/monokai.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/htmlmixed/htmlmixed.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/xml/xml.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/javascript/javascript.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/css/css.min.js"></script>
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .CodeMirror {
+            height: 500px;
+            border-radius: 12px;
+            font-size: 16px;
+        }
+        .btn {
+            transition: all 0.3s ease;
+        }
+        .btn:hover {
+            transform: scale(1.05);
+        }
+    </style>
+</head>
+<body class="p-6">
+    <div class="max-w-6xl mx-auto">
+        <div class="bg-white rounded-2xl shadow-2xl p-8">
+            <!-- Header -->
+            <div class="mb-8">
+                <a href="/" class="inline-block text-purple-600 hover:text-purple-800 mb-4">
+                    ← العودة للرئيسية
+                </a>
+                <h1 class="text-4xl font-bold text-gray-800 mb-2">
+                    ✏️ تعديل الصفحة
+                </h1>
+                <p class="text-gray-600">عدّل محتوى صفحتك كما تريد</p>
+            </div>
+
+            <!-- Form -->
+            <form id="editForm" class="space-y-6">
+                <div>
+                    <label class="block text-gray-700 font-semibold mb-2" for="name">
+                        📝 اسم الصفحة
+                    </label>
+                    <input type="text" id="name" name="name" required
+                           value="<%= page.name %>"
+                           class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-purple-500 focus:outline-none">
+                </div>
+
+                <div>
+                    <label class="block text-gray-700 font-semibold mb-2" for="htmlContent">
+                        💻 محتوى HTML
+                    </label>
+                    <textarea id="htmlContent" name="htmlContent"><%= page.htmlContent %></textarea>
+                </div>
+
+                <div class="flex gap-4">
+                    <button type="button" onclick="previewPage()" 
+                            class="btn flex-1 bg-blue-500 hover:bg-blue-600 text-white font-bold py-4 px-6 rounded-lg shadow-lg">
+                        👁️ معاينة
+                    </button>
+                    <button type="submit" 
+                            class="btn flex-1 bg-green-500 hover:bg-green-600 text-white font-bold py-4 px-6 rounded-lg shadow-lg">
+                        ✔️ حفظ التغييرات
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const pageId = '<%= page.id %>';
+
+        // تفعيل CodeMirror
+        const editor = CodeMirror.fromTextArea(document.getElementById('htmlContent'), {
+            mode: 'htmlmixed',
+            theme: 'monokai',
+            lineNumbers: true,
+            lineWrapping: true,
+            autoCloseTags: true,
+            autoCloseBrackets: true
+        });
+
+        // معاينة الصفحة
+        function previewPage() {
+            const htmlContent = editor.getValue();
+            const previewWindow = window.open('', '_blank');
+            previewWindow.document.write(htmlContent);
+            previewWindow.document.close();
+        }
+
+        // حفظ التغييرات
+        document.getElementById('editForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const name = document.getElementById('name').value;
+            const htmlContent = editor.getValue();
+
+            if (!htmlContent.trim()) {
+                alert('يجب إدخال محتوى HTML!');
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/pages/${pageId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ name, htmlContent })
+                });
+
+                if (response.ok) {
+                    alert('✅ تم حفظ التعديلات بنجاح!');
+                    window.location.href = '/';
+                } else {
+                    const data = await response.json();
+                    alert('❌ خطأ: ' + (data.error || 'فشل الحفظ'));
+                }
+            } catch (error) {
+                console.error('خطأ:', error);
+                alert('حدث خطأ أثناء حفظ التعديلات');
+            }
+        });
+    </script>
+</body>
+</html>
