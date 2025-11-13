@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HTML Gallery - معرض صفحات HTML</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+        }
+        .btn {
+            transition: all 0.3s ease;
+        }
+        .btn:hover {
+            transform: scale(1.05);
+        }
+    </style>
+</head>
+<body class="p-6">
+    <div class="max-w-7xl mx-auto">
+        <!-- Header -->
+        <div class="text-center mb-12">
+            <h1 class="text-5xl font-bold text-white mb-4 drop-shadow-lg">
+                🌐 معرض صفحات HTML
+            </h1>
+            <p class="text-xl text-white/90 mb-8">أنشئ وعدّل واستعرض صفحات HTML بكل حرية</p>
+            <a href="/create" class="btn inline-block bg-white text-purple-700 font-bold py-4 px-8 rounded-full shadow-lg hover:shadow-2xl">
+                ➕ إنشاء صفحة جديدة
+            </a>
+        </div>
+
+        <!-- Pages Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <% if (pages.length === 0) { %>
+                <div class="col-span-full text-center py-16">
+                    <div class="bg-white/20 backdrop-blur-lg rounded-2xl p-12 border border-white/30">
+                        <p class="text-2xl text-white mb-4">📜 لا توجد صفحات بعد</p>
+                        <p class="text-white/80">ابدأ بإنشاء أول صفحة HTML لك!</p>
+                    </div>
+                </div>
+            <% } else { %>
+                <% pages.forEach(page => { %>
+                    <div class="card bg-white rounded-2xl shadow-xl overflow-hidden border-2 border-white/20">
+                        <div class="bg-gradient-to-r from-purple-600 to-pink-600 p-6">
+                            <h2 class="text-2xl font-bold text-white truncate" title="<%= page.name %>">
+                                <%= page.name %>
+                            </h2>
+                            <p class="text-white/80 text-sm mt-2">
+                                📅 <%= new Date(page.createdAt).toLocaleDateString('ar-EG', { year: 'numeric', month: 'long', day: 'numeric' }) %>
+                            </p>
+                        </div>
+                        
+                        <div class="p-6">
+                            <div class="flex flex-wrap gap-3">
+                                <a href="/page/<%= page.id %>" target="_blank" 
+                                   class="btn flex-1 bg-blue-500 hover:bg-blue-600 text-white font-semibold py-3 px-4 rounded-lg text-center shadow-md">
+                                    👁️ عرض
+                                </a>
+                                <a href="/edit/<%= page.id %>" 
+                                   class="btn flex-1 bg-green-500 hover:bg-green-600 text-white font-semibold py-3 px-4 rounded-lg text-center shadow-md">
+                                    ✏️ تعديل
+                                </a>
+                                <button onclick="deletePage('<%= page.id %>', '<%= page.name %>')" 
+                                        class="btn flex-1 bg-red-500 hover:bg-red-600 text-white font-semibold py-3 px-4 rounded-lg shadow-md">
+                                    🗑️ حذف
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                <% }); %>
+            <% } %>
+        </div>
+    </div>
+
+    <script>
+        async function deletePage(id, name) {
+            if (!confirm(`هل أنت متأكد من حذف الصفحة "${name}"؟`)) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/pages/${id}`, {
+                    method: 'DELETE'
+                });
+
+                if (response.ok) {
+                    alert('تم حذف الصفحة بنجاح!');
+                    location.reload();
+                } else {
+                    alert('فشل حذف الصفحة');
+                }
+            } catch (error) {
+                console.error('خطأ:', error);
+                alert('حدث خطأ أثناء حذف الصفحة');
+            }
+        }
+    </script>
+</body>
+</html>
