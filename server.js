@@ -1,39 +1,28 @@
 const express = require('express');
-const fs = require('fs');
 const path = require('path');
 const helmet = require('helmet');
 const dotenv = require('dotenv');
+const db = require('./src/db');
 
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(helmet());
-
-// Static files and EJS setup
 app.use('/public', express.static(path.join(__dirname, 'public')));
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');
 
-// Load custom HTML route
+// Initialize DB and then set up routes
+db.init();
+
 const htmlRoutes = require('./routes/html');
 app.use(htmlRoutes);
 
-// Original /pages route (still supports legacy local files if needed)
-const pagesDir = path.join(__dirname, 'pages');
-app.get('/pages', (req, res) => {
-  fs.readdir(pagesDir, (err, files) => {
-    if (err || !files) return res.render('pages', { pages: [] });
-    const htmlPages = files.filter(f => f.endsWith('.html')).map(f => f.replace('.html', '')).sort();
-    res.render('pages', { pages: htmlPages });
-  });
-});
-
-// 404 catch-all (must come last)
+// 404 handler
 app.use((req, res) => {
   res.status(404).render('not_found', { title: 'Not Found' });
 });

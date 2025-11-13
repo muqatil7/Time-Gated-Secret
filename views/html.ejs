@@ -17,6 +17,12 @@
   <main class="max-w-3xl mx-auto my-7 p-6 card shadow-xl">
     <!-- رسالة الحالة -->
     <div id="status-message" class="hidden mb-4 p-4 rounded-md text-center"></div>
+
+    <% if (!dbInitialized) { %>
+      <div class="mb-4 p-4 rounded-md text-center bg-yellow-100 text-yellow-800 border border-yellow-300">
+        ميزات قاعدة البيانات معطلة. لا يمكن حفظ الصفحات الجديدة.
+      </div>
+    <% } %>
     
     <header role="banner" class="mb-6">
       <h1 id="page-title" class="text-3xl font-bold mb-2">إنشاء صفحة HTML جديدة</h1>
@@ -33,7 +39,7 @@
         <div id="drop-zone" class="mt-3 p-5 border border-dashed border-primary rounded bg-slate-900 text-slate-200 text-center cursor-pointer select-none">قم بسحب ملف HTML هنا لإسقاطه</div>
       </div>
       <section class="flex flex-row-reverse gap-3 mt-4">
-        <button type="button" id="save-firebase-btn" class="inline-flex items-center justify-center rounded-md bg-green-600 px-4 py-2 text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 transition disabled:opacity-60 disabled:cursor-not-allowed" autocomplete="off">
+        <button type="button" id="save-firebase-btn" class="inline-flex items-center justify-center rounded-md bg-green-600 px-4 py-2 text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 transition disabled:opacity-60 disabled:cursor-not-allowed" autocomplete="off" <%= !dbInitialized ? 'disabled' : '' %>>
           <svg id="save-svg" class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
           <span>حفظ</span>
         </button>
@@ -52,9 +58,12 @@
     const statusMessage = document.getElementById('status-message');
     const previewBtn = document.getElementById('preview-btn');
     const pageTitle = document.getElementById('page-title');
+    const dbInitialized = <%= dbInitialized %>;
 
     function checkInputs() {
-      saveFirebaseBtn.disabled = !(pageNameInput.value.trim() && textarea.value.trim());
+      if (dbInitialized) {
+        saveFirebaseBtn.disabled = !(pageNameInput.value.trim() && textarea.value.trim());
+      }
     }
 
     pageNameInput.addEventListener('input', checkInputs);
@@ -62,7 +71,7 @@
 
     function showMessage(msg, type = 'success') {
       statusMessage.textContent = msg;
-      statusMessage.className = `mb-4 p-4 rounded-md text-center ${type === 'success' ? 'bg-green-100 text-green-800 border border-green-300' : 'bg-red-100 text-red-800 border border-red-300'}`;
+      statusMessage.className = \`mb-4 p-4 rounded-md text-center \${type === 'success' ? 'bg-green-100 text-green-800 border border-green-300' : 'bg-red-100 text-red-800 border border-red-300'}\`;
       statusMessage.classList.remove('hidden');
       setTimeout(() => statusMessage.classList.add('hidden'), 5000);
     }
@@ -132,12 +141,12 @@
 
     async function loadPageForEditing(pageName) {
       try {
-        const response = await fetch(`/html/pages/${pageName}/edit`);
+        const response = await fetch(\`/html/pages/\${pageName}/edit\`);
         const data = await response.json();
         if(data.success) {
           pageNameInput.value = data.page.name;
           textarea.value = data.page.htmlCode;
-          pageTitle.textContent = `تعديل الصفحة: ${data.page.name}`;
+          pageTitle.textContent = \`تعديل الصفحة: \${data.page.name}\`;
           pageNameInput.readOnly = true; // Prevent editing of page name
           checkInputs();
         } else {
