@@ -221,6 +221,69 @@ function parseSecretDocument(doc) {
   };
 }
 
+// ============= HTML Pages Functions =============
+
+function buildHtmlPageFields({ pageName, htmlCode, createdAt, updatedAt }) {
+  const fields = {
+    pageName: stringField(pageName),
+    htmlCode: stringField(htmlCode),
+    createdAt: timestampField(createdAt),
+    updatedAt: timestampField(updatedAt),
+  };
+  return fields;
+}
+
+function parseHtmlPageDocument(doc) {
+  if (!doc || !doc.fields) return null;
+  const { fields } = doc;
+  return {
+    pageName: fields.pageName?.stringValue || doc.name.split('/').pop(),
+    htmlCode: fields.htmlCode?.stringValue || '',
+    createdAt: parseTimestampField(fields.createdAt),
+    updatedAt: parseTimestampField(fields.updatedAt),
+  };
+}
+
+async function createOrUpdateHtmlPage({ pageName, htmlCode, createdAt, updatedAt }) {
+  const fields = buildHtmlPageFields({ pageName, htmlCode, createdAt, updatedAt });
+  await callFirestore(
+    'PATCH',
+    `/documents/htmlPages/${encodeURIComponent(pageName)}`,
+    { fields },
+    {}
+  );
+}
+
+async function getHtmlPage(pageName) {
+  try {
+    const doc = await callFirestore('GET', `/documents/htmlPages/${encodeURIComponent(pageName)}`, null, {});
+    return parseHtmlPageDocument(doc);
+  } catch (e) {
+    if (e.status === 404 || e.code === 'NOT_FOUND') return null;
+    throw e;
+  }
+}
+
+async function listHtmlPages() {
+  try {
+    const result = await callFirestore('GET', '/documents/htmlPages', null, {
+      orderBy: 'updatedAt desc',
+      pageSize: 1000,
+    });
+    const documents = result.documents || [];
+    return documents.map(parseHtmlPageDocument).filter(Boolean);
+  } catch (e) {
+    if (e.status === 404 || e.code === 'NOT_FOUND') return [];
+    throw e;
+  }
+}
+
+async function deleteHtmlPage(pageName) {
+  await callFirestore('DELETE', `/documents/htmlPages/${encodeURIComponent(pageName)}`, null, {});
+}
+
+// ============= End HTML Pages Functions =============
+
 async function init() {
   loadConfig();
   await getAccessToken();
@@ -296,4 +359,9 @@ module.exports = {
   updateSecretSchedule,
   listSecrets,
   deleteSecret,
+  // HTML Pages functions
+  createOrUpdateHtmlPage,
+  getHtmlPage,
+  listHtmlPages,
+  deleteHtmlPage,
 };
