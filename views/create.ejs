@@ -35,7 +35,7 @@
         <div class="bg-white rounded-2xl shadow-2xl p-8">
             <!-- Header -->
             <div class="mb-8">
-                <a href="/" class="inline-block text-purple-600 hover:text-purple-800 mb-4">
+                <a href="<%= selectedFolderId ? '/?folder=' + selectedFolderId : '/' %>" class="inline-block text-purple-600 hover:text-purple-800 mb-4">
                     ← العودة للرئيسية
                 </a>
                 <h1 class="text-4xl font-bold text-gray-800 mb-2">
@@ -53,6 +53,22 @@
                     <input type="text" id="name" name="name" required
                            class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-purple-500 focus:outline-none"
                            placeholder="مثال: صفحتي الرائعة">
+                </div>
+
+                <div>
+                    <label class="block text-gray-700 font-semibold mb-2" for="folderId">
+                        📁 المجلد
+                    </label>
+                    <select id="folderId" name="folderId" 
+                            class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-purple-500 focus:outline-none">
+                        <option value="">المجلد الرئيسي</option>
+                        <% folders.forEach(folder => { %>
+                            <option value="<%= folder.id %>" <%= selectedFolderId === folder.id ? 'selected' : '' %>>
+                                <%= folder.name %>
+                            </option>
+                        <% }); %>
+                    </select>
+                    <p class="text-gray-500 text-sm mt-1">اختر المجلد الذي تريد حفظ الصفحة فيه</p>
                 </div>
 
                 <div>
@@ -102,6 +118,7 @@
 
             const name = document.getElementById('name').value;
             const htmlContent = editor.getValue();
+            const folderId = document.getElementById('folderId').value || null;
 
             if (!htmlContent.trim()) {
                 alert('يجب إدخال محتوى HTML!');
@@ -114,12 +131,12 @@
                     headers: {
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({ name, htmlContent })
+                    body: JSON.stringify({ name, htmlContent, folderId })
                 });
 
                 if (response.ok) {
                     alert('✅ تم حفظ الصفحة بنجاح!');
-                    window.location.href = '/';
+                    window.location.href = folderId ? `/?folder=${folderId}` : '/';
                 } else {
                     const data = await response.json();
                     alert('❌ خطأ: ' + (data.error || 'فشل الحفظ'));
