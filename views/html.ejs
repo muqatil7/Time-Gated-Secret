@@ -12,86 +12,95 @@
     <a href="/pages" class="text-indigo-300 px-3 py-2 hover:bg-slate-700 rounded transition text-lg font-bold">عرض الصفحات</a>
     <a href="/html" class="text-yellow-400 px-3 py-2 hover:bg-yellow-200 rounded transition text-lg font-bold">إنشاء / تعديل صفحة</a>
   </nav>
-  <div class="max-w-5xl mx-auto p-6">
+  <main class="max-w-3xl mx-auto my-7 p-6 card shadow-xl">
     <!-- رسالة الحالة -->
-    <div id="status-message" class="hidden mb-4 p-4 rounded-md"></div>
+    <div id="status-message" class="hidden mb-4 p-4 rounded-md text-center"></div>
     
-    <header role="banner" class="flex items-start justify-between gap-3">
-      <div>
-        <h1 class="text-3xl font-bold mb-2">إدارة صفحات HTML</h1>
-        <p class="text-slate-400 mb-6">اسحب ملف HTML، أو أدخل أسماء أو أنشئ صفحة جديدة وابدأ بالحفظ أو التعديل.</p>
-      </div>
+    <header role="banner" class="mb-6">
+      <h1 class="text-3xl font-bold mb-2">إدارة صفحات HTML</h1>
+      <p class="text-slate-400 mb-4">اسحب ملف HTML، أو أدخل اسما جديدا وابدأ بالحفظ أو التعديل.</p>
     </header>
     <form id="html-form" class="space-y-4">
       <div>
         <label class="block text-sm font-medium mb-1" for="page_name">اسم الصفحة</label>
-        <input id="page_name" name="page_name" pattern="^[a-zA-Z0-9_-]{3,32}$" required class="w-full rounded-md border px-3 py-2 mb-4 focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="ادخل اسم الصفحة بدون امتداد .html...">
+        <input id="page_name" name="page_name" pattern="^[a-zA-Z0-9_-]{3,32}$" autocomplete="off" required class="w-full rounded-md border px-3 py-2 mb-4 focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="ادخل اسم الصفحة...">
       </div>
       <div>
         <label class="block text-sm font-medium mb-1" for="html_code">كود HTML</label>
         <textarea id="html_code" name="html_code" rows="10" required class="w-full rounded-md border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="اسحب ملف HTML هنا أو الصق الكود..."></textarea>
-        <div id="drop-zone" class="mt-3 p-5 border border-dashed border-indigo-400 rounded bg-slate-900 text-slate-200 text-center cursor-pointer">قم بسحب ملف HTML هنا لإسقاطه</div>
+        <div id="drop-zone" class="mt-3 p-5 border border-dashed border-primary rounded bg-slate-900 text-slate-200 text-center cursor-pointer select-none">قم بسحب ملف HTML هنا لإسقاطه</div>
       </div>
-      <div class="flex gap-3">
-        <button type="button" id="save-firebase-btn" class="inline-flex items-center justify-center rounded-md bg-green-600 px-4 py-2 text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500">
-          <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-          </svg>
-          حفظ دائم في Firebase
+      <section class="flex flex-row-reverse gap-3 mt-4">
+        <button type="button" id="save-firebase-btn" class="inline-flex items-center justify-center rounded-md bg-green-600 px-4 py-2 text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 transition disabled:opacity-60 disabled:cursor-not-allowed" autocomplete="off">
+          <svg id="save-svg" class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+          <span>حفظ دائم في Firebase</span>
         </button>
         <button type="button" id="preview-btn" class="inline-flex items-center justify-center rounded-md bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
-          <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
-          </svg>
-          عرض فقط
+          <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+          <span>عرض فقط</span>
         </button>
-      </div>
+      </section>
     </form>
-    <div class="mt-6">
+    <section class="mt-10">
       <h2 class="text-lg font-bold mb-3">الصفحات المحفوظة في Firebase</h2>
       <div id="loading-pages" class="text-slate-400">جاري تحميل الصفحات...</div>
       <ul id="pages-list" class="list-disc pl-5 text-lg hidden"></ul>
-    </div>
-  </div>
+    </section>
+  </main>
   <script>
-  // Drag & Drop HTML
+  // عناصر الصفحة
   const dropZone = document.getElementById('drop-zone');
   const textarea = document.getElementById('html_code');
   const pageNameInput = document.getElementById('page_name');
-  const statusMessage = document.getElementById('status-message');
   const saveFirebaseBtn = document.getElementById('save-firebase-btn');
+  const statusMessage = document.getElementById('status-message');
   const previewBtn = document.getElementById('preview-btn');
   const pagesList = document.getElementById('pages-list');
   const loadingPages = document.getElementById('loading-pages');
 
-  // دالة لعرض رسائل الحالة
-  function showMessage(message, type = 'success') {
-    statusMessage.textContent = message;
-    statusMessage.className = `mb-4 p-4 rounded-md ${type === 'success' ? 'bg-green-100 text-green-800 border border-green-300' : 'bg-red-100 text-red-800 border border-red-300'}`;
-    statusMessage.classList.remove('hidden');
-    setTimeout(() => {
-      statusMessage.classList.add('hidden');
-    }, 5000);
+  function disableSave(disabled) {
+    saveFirebaseBtn.disabled = disabled;
+    saveFirebaseBtn.classList.toggle('opacity-60', disabled);
+    saveFirebaseBtn.classList.toggle('cursor-not-allowed', disabled);
   }
 
+  // فحص متطلبات التفعيل أولياً وأثناء الكتابة
+  function checkInputs() {
+    if(pageNameInput.value.trim() && textarea.value.trim()) {
+      disableSave(false);
+    } else {
+      disableSave(true);
+    }
+  }
+
+  pageNameInput.addEventListener('input', checkInputs);
+  textarea.addEventListener('input', checkInputs);
+  document.addEventListener('DOMContentLoaded', checkInputs);
+
+  function showMessage(msg, type = 'success') {
+    statusMessage.textContent = msg;
+    statusMessage.className = `mb-4 p-4 rounded-md text-center ${type === 'success' ? 'bg-green-100 text-green-800 border border-green-300' : 'bg-red-100 text-red-800 border border-red-300'}`;
+    statusMessage.classList.remove('hidden');
+    setTimeout(() => statusMessage.classList.add('hidden'), 5000);
+  }
+
+  // Drag & Drop HTML
   dropZone.addEventListener('dragover', function(e) {
     e.preventDefault();
-    dropZone.classList.add('bg-indigo-700');
+    dropZone.classList.add('bg-primary','text-indigo-100');
   });
-  
-  dropZone.addEventListener('dragleave', function(e) {
-    dropZone.classList.remove('bg-indigo-700');
+  dropZone.addEventListener('dragleave', function() {
+    dropZone.classList.remove('bg-primary','text-indigo-100');
   });
-  
   dropZone.addEventListener('drop', function(e) {
     e.preventDefault();
-    dropZone.classList.remove('bg-indigo-700');
+    dropZone.classList.remove('bg-primary','text-indigo-100');
     const files = e.dataTransfer.files;
-    if (files.length && files[0].type === 'text/html') {
+    if(files.length && files[0].type==="text/html"){
       const reader = new FileReader();
-      reader.onload = function(ev) {
+      reader.onload = function(ev){
         textarea.value = ev.target.result;
+        textarea.dispatchEvent(new Event('input'));
       };
       reader.readAsText(files[0]);
     } else {
@@ -99,137 +108,100 @@
     }
   });
 
-  // حفظ دائم في Firebase
+  // زر الحفظ الدائم
   saveFirebaseBtn.addEventListener('click', async function() {
+    if(saveFirebaseBtn.disabled) return;
     const pageName = pageNameInput.value.trim();
     const htmlCode = textarea.value.trim();
-
-    if (!pageName || !htmlCode) {
-      showMessage('يجب إدخال اسم الصفحة وكود HTML', 'error');
-      return;
-    }
-
-    try {
-      saveFirebaseBtn.disabled = true;
-      saveFirebaseBtn.textContent = 'جاري الحفظ...';
-
-      const response = await fetch('/html/save', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          page_name: pageName,
-          html_code: htmlCode
-        })
+    if(!pageName || !htmlCode) { showMessage('يجب تعبئة الاسم والكود','error');return; }
+    disableSave(true);
+    saveFirebaseBtn.querySelector('span').textContent = 'جاري الحفظ...';
+    try{
+      const res = await fetch('/html/save',{
+        method:'POST',headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ page_name: pageName, html_code: htmlCode })
       });
-
-      const data = await response.json();
-
-      if (data.success) {
-        showMessage(data.message, 'success');
-        loadPages(); // إعادة تحميل قائمة الصفحات
+      const data = await res.json();
+      if(data.success) {
+        showMessage(data.message,'success');
+        textarea.value = '';
+        pageNameInput.value = '';
+        checkInputs();
+        loadPages();
       } else {
-        showMessage(data.message, 'error');
+        showMessage(data.message || 'لم يتم الحفظ!','error');
       }
-    } catch (error) {
-      console.error('Error:', error);
-      showMessage('حدث خطأ أثناء الحفظ', 'error');
-    } finally {
-      saveFirebaseBtn.disabled = false;
-      saveFirebaseBtn.innerHTML = '<svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>حفظ دائم في Firebase';
+    }catch(err){
+      showMessage('خطأ في الاتصال بالخادم','error');
     }
+    saveFirebaseBtn.querySelector('span').textContent = 'حفظ دائم في Firebase';
+    checkInputs();
   });
-
-  // عرض فقط
-  previewBtn.addEventListener('click', function() {
-    const pageName = pageNameInput.value.trim();
+  // زر المعاينة
+  previewBtn.addEventListener('click',function(){
     const htmlCode = textarea.value.trim();
-
-    if (!pageName || !htmlCode) {
-      showMessage('يجب إدخال اسم الصفحة وكود HTML', 'error');
-      return;
-    }
-
-    // فتح نافذة جديدة لعرض HTML
+    if (!htmlCode) return showMessage('أدخل كود HTML للمعاينة','error');
     const previewWindow = window.open('', '_blank');
     previewWindow.document.write(htmlCode);
     previewWindow.document.close();
   });
-
-  // تحميل قائمة الصفحات من Firebase
+  // تحميل الصفحات من الخادم
   async function loadPages() {
-    try {
-      const response = await fetch('/html/pages');
-      const data = await response.json();
-      
+    try{
+      const res = await fetch('/html/pages');
+      const data = await res.json();
       loadingPages.classList.add('hidden');
       pagesList.classList.remove('hidden');
-
-      if (data.success && data.pages && data.pages.length) {
-        pagesList.innerHTML = data.pages.map(p => `
-          <li class="mb-2">
-            <span class="font-semibold">${p.name}</span>
-            <a href="/html/pages/${p.name}" target="_blank" class="text-indigo-400 ml-3 hover:underline">عرض</a>
-            <button onclick="editPage('${p.name}')" class="text-yellow-400 ml-3 hover:underline">تعديل</button>
-            <button onclick="deletePage('${p.name}')" class="text-red-500 ml-3 hover:underline">حذف</button>
+      if(data.success&&data.pages&&data.pages.length) {
+        pagesList.innerHTML = data.pages.map(p=>`
+          <li class="mb-2"><span class="font-semibold">${p.name}</span>
+          <a href="/html/pages/${p.name}" target="_blank" class="text-indigo-400 ml-3 hover:underline">عرض</a>
+          <button type="button" onclick="editPage('${p.name}')" class="text-yellow-400 ml-3 hover:underline">تعديل</button>
+          <button type="button" onclick="deletePage('${p.name}')" class="text-red-500 ml-3 hover:underline">حذف</button>
           </li>
         `).join('');
       } else {
-        pagesList.innerHTML = '<li class="text-sm text-gray-400">لا توجد صفحات محفوظة حاليا</li>';
+        pagesList.innerHTML='<li class="text-sm text-gray-400">لا توجد صفحات محفوظة حاليا</li>';
       }
-    } catch (error) {
-      console.error('Error loading pages:', error);
+    } catch {
       loadingPages.classList.add('hidden');
       pagesList.classList.remove('hidden');
-      pagesList.innerHTML = '<li class="text-red-400">تعذر جلب الصفحات</li>';
+      pagesList.innerHTML='<li class="text-red-400">تعذر جلب الصفحات من الخادم</li>';
     }
   }
-
   // تعديل صفحة
-  window.editPage = async function(pageName) {
-    try {
-      const response = await fetch(`/html/pages/${pageName}/edit`);
-      const data = await response.json();
-      
-      if (data.success) {
-        pageNameInput.value = data.page.name;
-        textarea.value = data.page.htmlCode;
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-        showMessage(`تم تحميل بيانات الصفحة "${pageName}" للتعديل`, 'success');
+  window.editPage=async function(pageName){
+    try{
+      const response=await fetch(`/html/pages/${pageName}/edit`);
+      const data=await response.json();
+      if(data.success) {
+        pageNameInput.value=data.page.name;
+        textarea.value=data.page.htmlCode;
+        checkInputs();
+        window.scrollTo({top:0,behavior:'smooth'});
+        showMessage(`تم تحميل بيانات الصفحة "${pageName}" للتعديل`,'success');
       }
-    } catch (error) {
-      console.error('Error loading page for edit:', error);
-      showMessage('فشل تحميل بيانات الصفحة', 'error');
+    }catch{
+      showMessage('فشل تحميل الصفحة','error');
     }
-  };
-
+  }
   // حذف صفحة
-  window.deletePage = async function(pageName) {
-    if (!confirm(`هل أنت متأكد من حذف الصفحة "${pageName}"؟`)) {
-      return;
-    }
-
-    try {
-      const response = await fetch(`/html/pages/${pageName}/delete`, {
-        method: 'POST'
-      });
-      const data = await response.json();
-      
-      if (data.success) {
-        showMessage(data.message, 'success');
+  window.deletePage=async function(pageName){
+    if(!confirm(`حذف الصفحة "${pageName}" بشكل دائم؟`))return;
+    try{
+      const response=await fetch(`/html/pages/${pageName}/delete`,{method:'POST'});
+      const data=await response.json();
+      if(data.success) {
+        showMessage(data.message,'success');
         loadPages();
-      } else {
-        showMessage(data.message, 'error');
+      }else{
+        showMessage(data.message,'error');
       }
-    } catch (error) {
-      console.error('Error deleting page:', error);
-      showMessage('فشل حذف الصفحة', 'error');
+    }catch{
+      showMessage('خطأ أثناء حذف الصفحة','error');
     }
-  };
-
-  // تحميل الصفحات عند بدء التطبيق
-  loadPages();
+  }
+  document.addEventListener('DOMContentLoaded',loadPages);
   </script>
 </body>
 </html>
