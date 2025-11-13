@@ -2,18 +2,46 @@ const express = require('express');
 const router = express.Router();
 const db = require('../src/db');
 
-// GET /html - عرض صفحة إدارة HTML
+// GET /html - Display HTML management page
 router.get('/html', async (req, res) => {
   try {
-    res.render('html', { title: 'إدارة صفحات HTML' });
+    res.render('html', {
+      title: 'إدارة صفحات HTML',
+      dbInitialized: db.dbInitialized()
+    });
   } catch (error) {
     console.error('Error rendering HTML page:', error);
     res.status(500).send('حدث خطأ في تحميل الصفحة');
   }
 });
 
+// GET /html/list - Display list of HTML pages
+router.get('/html/list', async (req, res) => {
+  try {
+    const pages = await db.listHtmlPages();
+    res.render('html_list', {
+      title: 'قائمة الصفحات المحفوظة',
+      pages: pages.map(p => ({
+        name: p.pageName,
+        createdAt: p.createdAt,
+        updatedAt: p.updatedAt
+      })),
+      dbInitialized: db.dbInitialized()
+    });
+  } catch (error) {
+    console.error('Error fetching HTML pages for list view:', error);
+    res.status(500).send('حدث خطأ في تحميل قائمة الصفحات');
+  }
+});
+
 // POST /html/save - حفظ صفحة HTML في Firebase
 router.post('/html/save', async (req, res) => {
+  if (!db.dbInitialized()) {
+    return res.status(500).json({
+      success: false,
+      message: 'Database is not configured. Please check server credentials.'
+    });
+  }
   try {
     const { page_name, html_code } = req.body;
 
@@ -134,6 +162,12 @@ router.get('/html/pages/:pageName/edit', async (req, res) => {
 
 // POST /html/pages/:pageName/delete - حذف صفحة
 router.post('/html/pages/:pageName/delete', async (req, res) => {
+  if (!db.dbInitialized()) {
+    return res.status(500).json({
+      success: false,
+      message: 'Database is not configured. Please check server credentials.'
+    });
+  }
   try {
     const { pageName } = req.params;
     
