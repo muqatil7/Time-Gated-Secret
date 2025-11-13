@@ -1,3 +1,8 @@
+// Polyfill fetch for Node.js environments older than 18 or those that lack fetch
+if (typeof fetch === 'undefined') {
+  global.fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
+}
+
 const crypto = require('crypto');
 const fs = require('fs');
 
