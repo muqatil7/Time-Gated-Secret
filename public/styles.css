@@ -1,44 +1,11 @@
-/* Global theme */
-:root{
-  --bg-start:#0ea5e9; /* sky-500 */
-  --bg-end:#7c3aed;   /* violet-600 */
-  --card-bg: rgba(255,255,255,0.9);
-  --glass: rgba(255,255,255,0.7);
-  --ring:#a78bfa; /* violet-300 */
-}
+/* Tiny, tasteful enhancements */
+:root { --ring: 0 0% 0% / 0.06 }
 
-/* App background */
-body{
-  min-height:100vh;
-  background: radial-gradient(1200px 600px at 10% -10%, rgba(255,255,255,0.15), transparent 60%),
-              radial-gradient(1200px 600px at 90% 110%, rgba(255,255,255,0.12), transparent 60%),
-              linear-gradient(135deg, var(--bg-start) 0%, var(--bg-end) 100%);
-}
+.card-hover { transition: box-shadow .2s, transform .2s }
+.card-hover:hover { transform: translateY(-2px); box-shadow: 0 10px 20px rgba(2,6,23,.06) }
 
-/* Glass panels */
-.glass{
-  background: var(--glass);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border: 1px solid rgba(255,255,255,0.25);
-}
+/* Smooth modal reveal */
+#createFolderModal { transition: opacity .2s ease }
 
-/* Cards */
-.card{
-  transition: transform .25s ease, box-shadow .25s ease;
-}
-.card:hover{ transform: translateY(-4px); box-shadow: 0 18px 40px rgba(0,0,0,.18); }
-
-/* Buttons */
-.btn{ transition: all .2s ease; }
-.btn:hover{ transform: translateY(-1px); box-shadow: 0 10px 20px rgba(0,0,0,.12); }
-.btn:focus{ outline: none; box-shadow: 0 0 0 3px var(--ring); }
-
-/* Headings */
-.h-title{ text-shadow: 0 6px 24px rgba(0,0,0,.25); }
-
-/* Layout helpers */
-.section{ padding: 1.25rem; }
-
-/* Editor wrapper */
-.editor-shell{ box-shadow: 0 20px 40px rgba(0,0,0,.15); }
+/* Better focus */
+input:focus, select:focus { outline: none }

@@ -3,64 +3,69 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>معرض الصفحات - HTML Gallery</title>
+  <title>معرض الصفحات</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;800&display=swap" rel="stylesheet">
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="/styles.css">
-  <meta name="theme-color" content="#7c3aed">
+  <style>
+    html, body { font-family: 'Cairo', system-ui, -apple-system, Segoe UI, Roboto, Arial, 'Noto Sans Arabic', sans-serif; }
+  </style>
 </head>
-<body class="section">
+<body class="min-h-screen bg-gradient-to-br from-slate-50 via-white to-indigo-50">
   <!-- Top Bar -->
-  <header class="glass rounded-2xl px-4 sm:px-6 py-4 sm:py-5 max-w-7xl mx-auto mb-6 flex items-center justify-between gap-4">
-    <div class="flex items-center gap-3">
-      <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-sky-400 to-violet-600 grid place-items-center text-white text-xl">✨</div>
-      <div>
-        <h1 class="h-title text-2xl sm:text-3xl font-extrabold text-white">معرض الصفحات</h1>
-        <p class="text-white/80 text-xs sm:text-sm">إنشاء وتنظيم صفحات HTML بسهولة</p>
+  <header class="sticky top-0 z-40 backdrop-blur supports-[backdrop-filter]:bg-white/70 bg-white/60 ring-1 ring-slate-200/60">
+    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="size-9 rounded-lg bg-gradient-to-br from-indigo-500 to-fuchsia-500 grid place-items-center text-white shadow-sm">🌐</div>
+        <div>
+          <p class="text-slate-900 font-extrabold tracking-tight">معرض صفحات HTML</p>
+          <p class="text-xs text-slate-500 hidden sm:block">إنشاء وتنظيم الصفحات داخل مجلدات بسهولة</p>
+        </div>
       </div>
-    </div>
-    <nav class="flex items-center gap-2 sm:gap-3">
-      <a href="/create<%= folderId ? '?folder=' + folderId : '' %>" class="btn inline-flex items-center gap-2 bg-white text-violet-700 font-semibold py-2.5 px-4 rounded-xl shadow">
-        <span>➕</span>
-        <span class="hidden sm:inline">صفحة جديدة</span>
-      </a>
-      <button onclick="showCreateFolderModal()" class="btn inline-flex items-center gap-2 bg-yellow-300 text-violet-900 font-semibold py-2.5 px-4 rounded-xl shadow">
-        <span>📁</span>
-        <span class="hidden sm:inline">مجلد جديد</span>
-      </button>
-      <% if (currentFolder) { %>
-        <a href="<%= currentFolder.parentId ? '/?folder=' + currentFolder.parentId : '/' %>" class="btn inline-flex items-center gap-2 bg-gray-100 text-gray-800 font-semibold py-2.5 px-4 rounded-xl shadow">
-          ⬅️ أعلى
+      <nav class="flex items-center gap-2">
+        <a href="/create<%= folderId ? '?folder=' + folderId : '' %>" class="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-white text-sm font-semibold shadow hover:bg-indigo-700 transition">
+          <span>➕</span> <span>صفحة جديدة</span>
         </a>
-      <% } %>
-    </nav>
+        <button onclick="showCreateFolderModal()" class="inline-flex items-center gap-2 rounded-lg bg-slate-900 px-4 py-2 text-white text-sm font-semibold shadow hover:bg-black transition">
+          <span>📁</span> <span>مجلد جديد</span>
+        </button>
+        <% if (currentFolder) { %>
+          <a href="<%= currentFolder.parentId ? '/?folder=' + currentFolder.parentId : '/' %>" class="inline-flex items-center gap-2 rounded-lg bg-white px-4 py-2 text-slate-700 text-sm font-semibold ring-1 ring-slate-200 hover:bg-slate-50 transition">
+            ⬅️ للأعلى
+          </a>
+        <% } %>
+      </nav>
+    </div>
   </header>
 
-  <!-- Breadcrumb -->
-  <div class="max-w-7xl mx-auto mb-6">
+  <!-- Page -->
+  <main class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Breadcrumb -->
     <% if (currentFolder) { %>
-      <div class="glass rounded-2xl p-4 text-white/90">
-        <span class="font-semibold">🏠 الرئيسية</span>
-        <span class="mx-2">/</span>
-        <span class="font-semibold">📁 <%= currentFolder.name %></span>
+      <div class="mb-6 flex items-center text-sm text-slate-600">
+        <a href="/" class="hover:text-slate-900 transition">🏠 الرئيسية</a>
+        <span class="mx-2 text-slate-400">/</span>
+        <span class="font-semibold text-slate-900">📁 <%= currentFolder.name %></span>
       </div>
     <% } %>
-  </div>
 
-  <main class="max-w-7xl mx-auto grid gap-8">
     <!-- Folders -->
-    <% if (folders.length > 0) { %>
-      <section>
-        <h2 class="text-white text-2xl sm:text-3xl font-bold mb-4">📁 المجلدات</h2>
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    <% if (folders && folders.length) { %>
+      <section class="mb-10">
+        <h2 class="mb-4 text-lg font-bold text-slate-900">المجلدات</h2>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
           <% folders.forEach(folder => { %>
-            <div class="card glass rounded-2xl p-5 text-violet-900">
-              <div class="flex items-start justify-between mb-4">
-                <h3 class="text-xl font-extrabold truncate" title="<%= folder.name %>">📁 <%= folder.name %></h3>
+            <div class="group rounded-xl p-5 bg-gradient-to-br from-indigo-500 to-fuchsia-600 text-white shadow-sm ring-1 ring-white/10 hover:shadow-md transition">
+              <div class="flex items-center justify-between mb-3">
+                <h3 class="font-bold truncate" title="<%= folder.name %>">📁 <%= folder.name %></h3>
+                <span class="opacity-80 text-xs">Folder</span>
               </div>
               <div class="flex gap-2">
-                <a href="/?folder=<%= folder.id %>" class="btn flex-1 bg-white/80 hover:bg-white text-violet-800 font-semibold py-2 px-3 rounded-lg text-sm text-center">فتح</a>
-                <button onclick="renameFolder('<%= folder.id %>', '<%= folder.name %>')" class="btn flex-1 bg-white/60 hover:bg-white/80 text-violet-900 font-semibold py-2 px-3 rounded-lg text-sm">إعادة تسمية</button>
-                <button onclick="deleteFolder('<%= folder.id %>', '<%= folder.name %>')" class="btn bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-3 rounded-lg text-sm">حذف</button>
+                <a href="/?folder=<%= folder.id %>" class="inline-flex items-center justify-center flex-1 rounded-lg bg-white/15 hover:bg-white/25 text-white text-sm font-semibold py-2 transition">فتح</a>
+                <button onclick="renameFolder('<%= folder.id %>', '<%= folder.name %>')" class="inline-flex items-center justify-center flex-1 rounded-lg bg-white/15 hover:bg-white/25 text-white text-sm font-semibold py-2 transition">تسمية</button>
+                <button onclick="deleteFolder('<%= folder.id %>', '<%= folder.name %>')" class="inline-flex items-center justify-center rounded-lg bg-rose-500/90 hover:bg-rose-600 text-white text-sm font-semibold px-3 py-2 transition">حذف</button>
               </div>
             </div>
           <% }); %>
@@ -70,38 +75,39 @@
 
     <!-- Pages -->
     <section>
-      <% if (pages.length > 0) { %>
-        <h2 class="text-white text-2xl sm:text-3xl font-bold mb-4">📄 الصفحات</h2>
+      <% if (pages && pages.length) { %>
+        <h2 class="mb-4 text-lg font-bold text-slate-900">الصفحات</h2>
       <% } %>
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <% if (pages.length === 0 && folders.length === 0) { %>
-          <div class="col-span-full text-center">
-            <div class="glass rounded-2xl p-10">
-              <p class="text-2xl text-white mb-2">📜 لا توجد صفحات أو مجلدات</p>
-              <p class="text-white/80">ابدأ بإنشاء أول صفحة أو مجلد الآن</p>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+        <% if ((!pages || pages.length === 0) && (!folders || folders.length === 0)) { %>
+          <div class="col-span-full">
+            <div class="rounded-2xl p-10 text-center bg-white/60 ring-1 ring-slate-200 shadow-sm">
+              <p class="text-xl font-semibold text-slate-900">📜 لا توجد صفحات أو مجلدات بعد</p>
+              <p class="mt-1 text-slate-600">ابدأ بإنشاء أول صفحة أو مجلد الآن</p>
             </div>
           </div>
-        <% } else if (pages.length === 0) { %>
-          <div class="col-span-full text-center">
-            <div class="glass rounded-2xl p-8">
-              <p class="text-xl text-white">📜 لا توجد صفحات في هذا المجلد</p>
+        <% } else if (!pages || pages.length === 0) { %>
+          <div class="col-span-full">
+            <div class="rounded-2xl p-8 text-center bg-white/60 ring-1 ring-slate-200 shadow-sm">
+              <p class="text-slate-700">📜 لا توجد صفحات في هذا المجلد</p>
             </div>
           </div>
         <% } else { %>
           <% pages.forEach(page => { %>
-            <article class="card bg-white rounded-2xl shadow-xl overflow-hidden border border-white/30">
-              <div class="bg-gradient-to-r from-violet-600 to-fuchsia-600 p-6">
-                <h3 class="text-2xl font-bold text-white truncate" title="<%= page.name %>"><%= page.name %></h3>
-                <p class="text-white/90 text-sm mt-2">📅 <%= new Date(page.createdAt).toLocaleDateString('ar-EG', { year: 'numeric', month: 'long', day: 'numeric' }) %></p>
+            <div class="group rounded-xl bg-white shadow-sm ring-1 ring-slate-200 hover:shadow-md transition overflow-hidden">
+              <div class="bg-gradient-to-r from-indigo-600 to-fuchsia-600 p-5">
+                <h3 class="text-white font-bold truncate" title="<%= page.name %>"><%= page.name %></h3>
+                <p class="mt-1 text-white/90 text-xs">📅 <%= new Date(page.createdAt).toLocaleDateString('ar-EG', { year: 'numeric', month: 'long', day: 'numeric' }) %></p>
               </div>
               <div class="p-5">
-                <div class="flex flex-wrap gap-2">
-                  <a href="/page/<%= page.id %>" target="_blank" class="btn flex-1 bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2.5 px-4 rounded-lg text-center">👁️ عرض</a>
-                  <a href="/edit/<%= page.id %>" class="btn flex-1 bg-emerald-500 hover:bg-emerald-600 text-white font-semibold py-2.5 px-4 rounded-lg text-center">✏️ تعديل</a>
-                  <button onclick="deletePage('<%= page.id %>', '<%= page.name %>')" class="btn flex-1 bg-rose-500 hover:bg-rose-600 text-white font-semibold py-2.5 px-4 rounded-lg">🗑️ حذف</button>
+                <div class="flex flex-wrap gap-3">
+                  <a href="/page/<%= page.id %>" target="_blank" class="inline-flex items-center justify-center flex-1 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold py-2.5 transition">👁️ عرض</a>
+                  <a href="/edit/<%= page.id %>" class="inline-flex items-center justify-center flex-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold py-2.5 transition">✏️ تعديل</a>
+                  <button onclick="deletePage('<%= page.id %>', '<%= page.name %>')" class="inline-flex items-center justify-center flex-1 rounded-lg bg-rose-500 hover:bg-rose-600 text-white text-sm font-semibold py-2.5 transition">🗑️ حذف</button>
                 </div>
               </div>
-            </article>
+            </div>
           <% }); %>
         <% } %>
       </div>
@@ -109,53 +115,76 @@
   </main>
 
   <!-- Create Folder Modal -->
-  <div id="createFolderModal" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm grid place-items-center z-50 p-4">
-    <div class="bg-white rounded-2xl p-6 w-full max-w-md editor-shell">
-      <h3 class="text-2xl font-bold text-violet-900 mb-4">📁 إنشاء مجلد جديد</h3>
-      <input type="text" id="folderName" placeholder="اسم المجلد" class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-violet-500 focus:outline-none mb-4">
-      <div class="flex gap-3">
-        <button onclick="createFolder()" class="flex-1 bg-violet-600 hover:bg-violet-700 text-white font-bold py-3 rounded-lg">إنشاء</button>
-        <button onclick="hideCreateFolderModal()" class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-900 font-bold py-3 rounded-lg">إلغاء</button>
+  <div id="createFolderModal" class="hidden fixed inset-0 bg-slate-900/40 backdrop-blur-sm grid place-items-center z-50">
+    <div class="bg-white rounded-2xl p-6 w-full max-w-md shadow-xl ring-1 ring-slate-200">
+      <h3 class="text-xl font-bold text-slate-900 mb-4">📁 إنشاء مجلد جديد</h3>
+      <input id="folderName" type="text" placeholder="اسم المجلد" class="w-full rounded-lg border border-slate-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 px-4 py-3 outline-none" />
+      <div class="mt-5 flex gap-3">
+        <button onclick="createFolder()" class="inline-flex items-center justify-center flex-1 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold py-2.5 transition">إنشاء</button>
+        <button onclick="hideCreateFolderModal()" class="inline-flex items-center justify-center flex-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-800 text-sm font-semibold py-2.5 transition">إلغاء</button>
       </div>
     </div>
   </div>
 
   <script>
     const currentFolderId = '<%= folderId || "" %>';
-    function showCreateFolderModal(){ document.getElementById('createFolderModal').classList.remove('hidden'); document.getElementById('folderName').focus(); }
-    function hideCreateFolderModal(){ document.getElementById('createFolderModal').classList.add('hidden'); document.getElementById('folderName').value=''; }
 
-    async function createFolder(){
+    function showCreateFolderModal() {
+      document.getElementById('createFolderModal').classList.remove('hidden');
+      setTimeout(() => document.getElementById('folderName').focus(), 50);
+    }
+    function hideCreateFolderModal() {
+      document.getElementById('createFolderModal').classList.add('hidden');
+      document.getElementById('folderName').value = '';
+    }
+
+    async function createFolder() {
       const name = document.getElementById('folderName').value.trim();
-      if(!name){ alert('يرجى إدخال اسم المجلد'); return; }
-      const res = await fetch('/api/folders',{ method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ name, parentId: currentFolderId || null }) });
-      if(res.ok){ alert('تم إنشاء المجلد بنجاح!'); location.reload(); }
-      else{ const d=await res.json().catch(()=>({})); alert('خطأ: '+(d.error||'فشل إنشاء المجلد')); }
+      if (!name) return alert('يرجى إدخال اسم المجلد');
+      try {
+        const res = await fetch('/api/folders', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, parentId: currentFolderId || null })
+        });
+        if (res.ok) { alert('تم الإنشاء'); location.reload(); }
+        else { const d = await res.json(); alert('خطأ: ' + (d.error || 'فشل الإنشاء')); }
+      } catch (e) { console.error(e); alert('حدث خطأ أثناء إنشاء المجلد'); }
     }
 
-    async function deleteFolder(id,name){
-      if(!confirm(`هل أنت متأكد من حذف المجلد "${name}"؟\n\nتنبيه: لا يمكن حذف المجلد إذا كان يحتوي على صفحات أو مجلدات فرعية.`)) return;
-      const res = await fetch(`/api/folders/${id}`,{ method:'DELETE' });
-      if(res.ok){ alert('تم حذف المجلد بنجاح!'); location.reload(); }
-      else{ const d=await res.json().catch(()=>({})); alert('خطأ: '+(d.error||'فشل حذف المجلد')); }
+    async function deleteFolder(id, name) {
+      if (!confirm(`حذف المجلد "${name}"؟\nلن يُحذف إذا كان يحتوي عناصر.`)) return;
+      try {
+        const res = await fetch(`/api/folders/${id}`, { method: 'DELETE' });
+        if (res.ok) { alert('تم الحذف'); location.reload(); }
+        else { const d = await res.json(); alert('خطأ: ' + (d.error || 'فشل الحذف')); }
+      } catch (e) { console.error(e); alert('حدث خطأ أثناء الحذف'); }
     }
 
-    async function renameFolder(id,oldName){
-      const newName = prompt('أدخل الاسم الجديد للمجلد:', oldName);
-      if(!newName || newName===oldName) return;
-      const res = await fetch(`/api/folders/${id}`,{ method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ name:newName }) });
-      if(res.ok){ alert('تم تغيير اسم المجلد بنجاح!'); location.reload(); }
-      else{ const d=await res.json().catch(()=>({})); alert('خطأ: '+(d.error||'فشل تغيير الاسم')); }
+    async function renameFolder(id, oldName) {
+      const newName = prompt('أدخل الاسم الجديد:', oldName);
+      if (!newName || newName === oldName) return;
+      try {
+        const res = await fetch(`/api/folders/${id}`, {
+          method: 'PUT', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name: newName })
+        });
+        if (res.ok) { alert('تم التغيير'); location.reload(); }
+        else { const d = await res.json(); alert('خطأ: ' + (d.error || 'فشل التغيير')); }
+      } catch (e) { console.error(e); alert('حدث خطأ أثناء تغيير الاسم'); }
     }
 
-    async function deletePage(id,name){
-      if(!confirm(`هل أنت متأكد من حذف الصفحة "${name}"؟`)) return;
-      const res = await fetch(`/api/pages/${id}`,{ method:'DELETE' });
-      if(res.ok){ alert('تم حذف الصفحة بنجاح!'); location.reload(); }
-      else{ alert('فشل حذف الصفحة'); }
+    async function deletePage(id, name) {
+      if (!confirm(`هل أنت متأكد من حذف الصفحة "${name}"؟`)) return;
+      try {
+        const res = await fetch(`/api/pages/${id}`, { method: 'DELETE' });
+        if (res.ok) { alert('تم حذف الصفحة'); location.reload(); }
+        else { alert('فشل حذف الصفحة'); }
+      } catch (e) { console.error(e); alert('حدث خطأ أثناء حذف الصفحة'); }
     }
 
-    document.getElementById('folderName')?.addEventListener('keypress', e => { if(e.key==='Enter') createFolder(); });
+    document.getElementById('folderName').addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') createFolder();
+    });
   </script>
 </body>
 </html>

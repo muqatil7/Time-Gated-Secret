@@ -3,55 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>إنشاء صفحة - HTML Gallery</title>
+  <title>إنشاء صفحة</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;800&display=swap" rel="stylesheet">
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="/styles.css">
-</head>
-<body class="section">
-  <div class="max-w-7xl mx-auto grid gap-6">
-    <!-- Header -->
-    <header class="glass rounded-2xl px-5 py-5 flex items-center justify-between">
-      <a href="<%= selectedFolderId ? '/?folder=' + selectedFolderId : '/' %>" class="btn inline-flex items-center gap-2 bg-white text-violet-700 font-semibold py-2.5 px-4 rounded-xl shadow">← الرئيسية</a>
-      <div class="text-right">
-        <h1 class="h-title text-2xl sm:text-3xl font-extrabold text-white">✨ إنشاء صفحة HTML جديدة</h1>
-        <p class="text-white/80 text-sm">أنشئ صفحة بمظهر حديث وجذاب</p>
-      </div>
-    </header>
-
-    <!-- Form Card -->
-    <section class="glass rounded-2xl p-6 grid gap-6">
-      <form id="createForm" class="grid md:grid-cols-2 gap-6">
-        <div class="grid gap-5">
-          <div>
-            <label class="block text-white font-semibold mb-2" for="name">📝 اسم الصفحة</label>
-            <input type="text" id="name" name="name" required class="w-full px-4 py-3 border-2 border-white/30 rounded-lg focus:border-violet-500 focus:outline-none bg-white/80" placeholder="مثال: صفحتي الرائعة">
-          </div>
-
-          <div>
-            <label class="block text-white font-semibold mb-2" for="folderId">📁 المجلد</label>
-            <select id="folderId" name="folderId" class="w-full px-4 py-3 border-2 border-white/30 rounded-lg focus:border-violet-500 focus:outline-none bg-white/80">
-              <option value="">المجلد الرئيسي</option>
-              <% folders.forEach(folder => { %>
-                <option value="<%= folder.id %>" <%= selectedFolderId === folder.id ? 'selected' : '' %>><%= folder.name %></option>
-              <% }); %>
-            </select>
-            <p class="text-white/80 text-xs mt-1">اختر أين تريد حفظ الصفحة</p>
-          </div>
-
-          <div class="flex gap-3">
-            <button type="button" onclick="previewPage()" class="btn flex-1 bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 rounded-lg">👁️ معاينة</button>
-            <button type="submit" class="btn flex-1 bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-3 rounded-lg">✔️ حفظ</button>
-          </div>
-        </div>
-
-        <div class="grid">
-          <label class="block text-white font-semibold mb-2" for="htmlContent">💻 محتوى HTML</label>
-          <textarea id="htmlContent" name="htmlContent"></textarea>
-        </div>
-      </form>
-    </section>
-  </div>
-
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/theme/monokai.min.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.js"></script>
@@ -59,22 +16,76 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/xml/xml.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/javascript/javascript.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/css/css.min.js"></script>
+  <style> html, body { font-family: 'Cairo', system-ui, -apple-system, Segoe UI, Roboto, Arial, 'Noto Sans Arabic', sans-serif; } .CodeMirror{height:520px;border-radius:12px} </style>
+</head>
+<body class="min-h-screen bg-gradient-to-br from-slate-50 via-white to-indigo-50">
+  <header class="sticky top-0 z-40 backdrop-blur supports-[backdrop-filter]:bg-white/70 bg-white/60 ring-1 ring-slate-200/60">
+    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <a href="<%= selectedFolderId ? '/?folder=' + selectedFolderId : '/' %>" class="inline-flex items-center gap-2 rounded-lg bg-white px-4 py-2 text-slate-700 text-sm font-semibold ring-1 ring-slate-200 hover:bg-slate-50 transition">← الرئيسية</a>
+      <div class="flex items-center gap-3">
+        <div class="size-9 rounded-lg bg-gradient-to-br from-indigo-500 to-fuchsia-500 grid place-items-center text-white shadow-sm">✨</div>
+        <p class="text-slate-900 font-extrabold tracking-tight">إنشاء صفحة HTML</p>
+      </div>
+      <span class="w-24"></span>
+    </div>
+  </header>
+
+  <main class="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-8">
+    <div class="bg-white/80 rounded-2xl shadow-sm ring-1 ring-slate-200 p-6">
+      <form id="createForm" class="space-y-6">
+        <div>
+          <label for="name" class="block text-sm font-semibold text-slate-800 mb-2">📝 اسم الصفحة</label>
+          <input id="name" name="name" type="text" required class="w-full rounded-lg border border-slate-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 px-4 py-3 outline-none" placeholder="مثال: صفحتي الرائعة">
+        </div>
+
+        <div>
+          <label for="folderId" class="block text-sm font-semibold text-slate-800 mb-2">📁 المجلد</label>
+          <select id="folderId" name="folderId" class="w-full rounded-lg border border-slate-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 px-4 py-3 outline-none">
+            <option value="">المجلد الرئيسي</option>
+            <% folders.forEach(folder => { %>
+              <option value="<%= folder.id %>" <%= selectedFolderId === folder.id ? 'selected' : '' %>><%= folder.name %></option>
+            <% }); %>
+          </select>
+          <p class="mt-1 text-xs text-slate-500">اختر المجلد لحفظ الصفحة داخله</p>
+        </div>
+
+        <div>
+          <label for="htmlContent" class="block text-sm font-semibold text-slate-800 mb-2">💻 محتوى HTML</label>
+          <textarea id="htmlContent" name="htmlContent"></textarea>
+        </div>
+
+        <div class="flex flex-col sm:flex-row gap-3">
+          <button type="button" onclick="previewPage()" class="inline-flex items-center justify-center flex-1 rounded-lg bg-slate-900 hover:bg-black text-white text-sm font-semibold py-3 transition">👁️ معاينة</button>
+          <button type="submit" class="inline-flex items-center justify-center flex-1 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold py-3 transition">✔️ حفظ الصفحة</button>
+        </div>
+      </form>
+    </div>
+  </main>
 
   <script>
     const editor = CodeMirror.fromTextArea(document.getElementById('htmlContent'), {
-      mode:'htmlmixed', theme:'monokai', lineNumbers:true, lineWrapping:true, autoCloseTags:true, autoCloseBrackets:true,
-      value:`<!DOCTYPE html>\n<html lang="ar">\n<head>\n  <meta charset=\"UTF-8\">\n  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n  <title>صفحتي</title>\n</head>\n<body>\n  <h1>مرحباً بك!</h1>\n</body>\n</html>`
+      mode: 'htmlmixed', theme: 'monokai', lineNumbers: true, lineWrapping: true,
+      autoCloseTags: true, autoCloseBrackets: true,
+      value: `<!DOCTYPE html>\n<html lang="ar">\n<head>\n  <meta charset="UTF-8">\n  <meta name="viewport" content="width=device-width, initial-scale=1.0">\n  <title>صفحتي</title>\n</head>\n<body>\n  <h1>مرحبًا بك!</h1>\n</body>\n</html>`
     });
 
-    function previewPage(){ const html=editor.getValue(); const w=window.open('','_blank'); w.document.write(html); w.document.close(); }
+    function previewPage() {
+      const preview = window.open('', '_blank');
+      preview.document.write(editor.getValue());
+      preview.document.close();
+    }
 
-    document.getElementById('createForm').addEventListener('submit', async (e)=>{
+    document.getElementById('createForm').addEventListener('submit', async (e) => {
       e.preventDefault();
-      const name=document.getElementById('name').value; const htmlContent=editor.getValue(); const folderId=document.getElementById('folderId').value||null;
-      if(!htmlContent.trim()){ alert('يجب إدخال محتوى HTML!'); return; }
-      const res = await fetch('/api/pages',{ method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ name, htmlContent, folderId }) });
-      if(res.ok){ alert('✅ تم حفظ الصفحة بنجاح!'); window.location.href = folderId? `/?folder=${folderId}` : '/'; }
-      else{ const d=await res.json().catch(()=>({})); alert('❌ خطأ: '+(d.error||'فشل الحفظ')); }
+      const name = document.getElementById('name').value;
+      const htmlContent = editor.getValue();
+      const folderId = document.getElementById('folderId').value || null;
+      if (!htmlContent.trim()) return alert('يجب إدخال محتوى HTML!');
+      try {
+        const res = await fetch('/api/pages', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, htmlContent, folderId }) });
+        if (res.ok) { alert('✅ تم الحفظ بنجاح'); window.location.href = folderId ? `/?folder=${folderId}` : '/'; }
+        else { const d = await res.json(); alert('❌ خطأ: ' + (d.error || 'فشل الحفظ')); }
+      } catch (err) { console.error(err); alert('حدث خطأ أثناء الحفظ'); }
     });
   </script>
 </body>
