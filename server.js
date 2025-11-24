@@ -278,6 +278,39 @@ app.put('/api/folders/:id', async (req, res) => {
   }
 });
 
+// عرض جميع البيانات من قاعدة البيانات
+app.get('/data', async (req, res) => {
+  try {
+    const allData = {};
+    
+    // جلب جميع المجموعات (collections) في قاعدة البيانات
+    const collections = await db.listCollections();
+    
+    for (const collection of collections) {
+      const collectionName = collection.id;
+      const snapshot = await collection.get();
+      
+      allData[collectionName] = [];
+      snapshot.forEach(doc => {
+        allData[collectionName].push({
+          id: doc.id,
+          ...doc.data()
+        });
+      });
+    }
+    
+    // إرسال البيانات بصيغة JSON منسقة
+    res.setHeader('Content-Type', 'application/json; charset=utf-8');
+    res.send(JSON.stringify(allData, null, 2));
+  } catch (error) {
+    console.error('خطأ في جلب البيانات:', error);
+    res.status(500).json({ 
+      error: 'فشل جلب البيانات', 
+      details: error.message 
+    });
+  }
+});
+
 // Health check
 app.get('/health', (req, res) => {
   res.json({ ok: true });
